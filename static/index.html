@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradeLens | Secure Trading Data Analytics</title>
+    <meta name="description" content="Monitor your trading activities, track profits and losses, and visualize portfolio performance.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+<body>
+    <!-- App Container -->
+    <div id="app">
+        <!-- Auth View -->
+        <div id="auth-view" class="view active">
+            <div class="auth-container">
+                <div class="auth-box">
+                    <div class="auth-header">
+                        <h1>TradeLens</h1>
+                        <p>Analyze your trading edge.</p>
+                    </div>
+                    
+                    <!-- AI Smart Search Section -->
+                    <div class="ai-search-container" style="padding: 1.2rem;">
+                        <div class="ai-search-header" style="margin-bottom: 0.8rem;">
+                            <span class="ai-icon">✨</span>
+                            <h3>AI Smart Search</h3>
+                        </div>
+                        <form id="ai-search-form">
+                            <div class="input-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+                                <div class="input-group" style="margin-bottom: 0;">
+                                    <label for="ai-search-username" style="font-size: 0.75rem;">Username</label>
+                                    <input type="text" id="ai-search-username" list="search-username-options" placeholder="e.g. alice" style="padding: 0.5rem;">
+                                    <datalist id="search-username-options"></datalist>
+                                </div>
+                                <div class="input-group" style="margin-bottom: 0;">
+                                    <label for="ai-search-id" style="font-size: 0.75rem;">Trader ID</label>
+                                    <input type="text" id="ai-search-id" placeholder="e.g. TraderX" style="padding: 0.5rem;">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn primary-btn w-100" style="padding: 0.5rem 1rem;">🔍 Search Trader</button>
+                        </form>
+                        <div id="ai-search-error" class="error-message"></div>
+                    </div>
+                    
+                    <div class="divider" style="display: none;">
+                        <span>OR LOGIN TO YOUR ACCOUNT</span>
+                    </div>
+                    <form id="auth-form" style="display: none;">
+                        <div class="input-group">
+                            <label for="username">Username</label>
+                            <input type="text" id="username" placeholder="Enter your username">
+                        </div>
+                        <div class="input-group" id="phone-group" style="display: none;">
+                            <label for="phone">Phone Number</label>
+                            <input type="tel" id="phone" placeholder="Enter your phone number (optional)">
+                        </div>
+                        <div class="input-group" id="email-group" style="display: none;">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" placeholder="Enter your email (optional)">
+                        </div>
+                        <div class="input-group" id="broker-group" style="display: none;">
+                            <label for="broker">Broker Name</label>
+                            <input type="text" id="broker" placeholder="e.g. Binance, TradeStation (optional)">
+                        </div>
+                        <div class="input-group" id="balance-group" style="display: none;">
+                            <label for="balance">Initial Balance (₹)</label>
+                            <input type="number" id="balance" step="any" placeholder="Enter starting balance (default: 10000.00)">
+                        </div>
+                        <div class="input-group">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" placeholder="Enter your password">
+                        </div>
+                        <button type="submit" id="auth-submit-btn" class="btn primary-btn">Login</button>
+                    </form>
+                    <div class="auth-footer" style="display: none;">
+                        <p id="auth-toggle-text">Don't have an account? <a href="#" id="toggle-auth">Register</a></p>
+                    </div>
+                    <div id="auth-error" class="error-message" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard View -->
+        <div id="dashboard-view" class="view">
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <h2>TradeLens</h2>
+                </div>
+                <nav class="sidebar-nav">
+                    <ul>
+                        <li class="active"><a href="#" data-target="overview-section">Dashboard</a></li>
+                        <li><a href="#" data-target="history-section">Trade History</a></li>
+                    </ul>
+                    <div class="sidebar-performance" style="padding: 1.25rem; margin-top: 1.5rem; border-top: 1px solid var(--border); margin-left: 1rem; margin-right: 1rem; background: rgba(30, 41, 59, 0.25); border-radius: 8px;">
+                        <h3 style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.75rem; font-weight: 600;">Performance Status</h3>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+                            <span id="metric-performance-badge" style="padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; background: rgba(148, 163, 184, 0.1); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.2); display: inline-block;">No Data</span>
+                        </div>
+                        <div id="metric-performance-desc" style="font-size: 0.725rem; color: var(--text-secondary); margin-top: 0.5rem; line-height: 1.3;">Log closed trades to evaluate</div>
+                        <div id="performance-stats" style="font-size: 0.725rem; color: var(--text-secondary); margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.25rem 0.4rem; align-items: center;">
+                            <a href="#" id="performance-winrate" class="subtopic">Win Rate: 0%</a>
+                            <span style="color: rgba(255,255,255,0.15)">|</span>
+                            <a href="#" id="performance-losrate" class="subtopic">Loss Rate: 0%</a>
+                            <span style="color: rgba(255,255,255,0.15)">|</span>
+                            <a href="#" id="performance-holdtime" class="subtopic">Time: -</a>
+                            <span style="color: rgba(255,255,255,0.15)">|</span>
+                            <a href="#" id="performance-history" class="subtopic">History</a>
+                        </div>
+                    </div>
+                </nav>
+                <div class="sidebar-footer">
+                    <div class="trader-details">
+                        <p id="user-display">User</p>
+                        <p id="user-id-display" class="detail-text">ID: -</p>
+                        <p id="user-broker-display" class="detail-text">Broker: -</p>
+                        <p id="user-phone-display" class="detail-text">Phone: -</p>
+                        <p id="user-location-display" class="detail-text">Location: -</p>
+                        <p id="user-date-display" class="detail-text">Logged In: -</p>
+                    </div>
+                    <button id="edit-profile-btn" class="btn primary-btn" style="margin-bottom: 0.5rem; width: 100%;">Edit Profile</button>
+                    <button id="logout-btn" class="btn secondary-btn" style="width: 100%;">Back to Search</button>
+                </div>
+            </aside>
+            <main class="main-content">
+                <header class="topbar">
+                    <h1>Overview</h1>
+                    <button id="new-trade-btn" class="btn primary-btn">+ New Trade</button>
+                </header>
+
+                <div class="content-sections">
+                    <!-- Overview Section -->
+                    <section id="overview-section" class="section active">
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <h3>Account Balance</h3>
+                                <div id="metric-balance" class="metric-value">₹0.00</div>
+                            </div>
+                            <div class="metric-card">
+                                <h3>Total PnL</h3>
+                                <p id="metric-pnl" class="metric-value">₹0.00</p>
+                            </div>
+                            <div class="metric-card">
+                                <h3>Win Rate</h3>
+                                <p id="metric-winrate" class="metric-value">0%</p>
+                            </div>
+                            <div class="metric-card">
+                                <h3>Total Trades (Closed)</h3>
+                                <p id="metric-trades" class="metric-value">0</p>
+                            </div>
+                        </div>
+
+                        <div class="market-chart-container">
+                            <div class="market-chart-card">
+                                <h3>Market Action (BTC/USD) - SMC/ICT View</h3>
+                                <div id="tv-chart" style="width: 100%; height: 400px; margin-top: 1rem;"></div>
+                            </div>
+                        </div>
+
+
+                        
+                        <div class="insights-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; max-width: 1000px; margin-left: auto; margin-right: auto;">
+                            <div class="risk-meter-card" style="width: 100%; margin: 0;">
+                                <h3>Risk Profile Analyzer</h3>
+                                <div class="risk-meter-container">
+                                    <svg class="risk-svg" viewBox="0 0 100 100">
+                                        <circle class="risk-track" cx="50" cy="50" r="40"></circle>
+                                        <circle id="risk-fill" class="risk-fill" cx="50" cy="50" r="40"></circle>
+                                    </svg>
+                                    <div class="risk-value-container">
+                                        <span id="risk-score-display">0</span>
+                                        <span id="risk-level-display" class="risk-label">Unknown</span>
+                                    </div>
+                                </div>
+                                <div id="risk-description" style="font-size: 0.8rem; color: var(--text-secondary); text-align: center; margin-top: 0.2rem;">Analyzing trader risk...</div>
+                                <div class="risk-legend" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem 0.8rem; font-size: 0.7rem; margin-top: 0.5rem; color: var(--text-secondary); text-align: left; width: 100%; padding: 0 0.5rem;">
+                                    <span><span style="color: #00e676; margin-right: 3px;">●</span> Low Risk</span>
+                                    <span><span style="color: #ffeb3b; margin-right: 3px;">●</span> Moderate Risk</span>
+                                    <span><span style="color: #ff9100; margin-right: 3px;">●</span> High Risk</span>
+                                    <span><span style="color: #ff1744; margin-right: 3px;">●</span> Critical Risk</span>
+                                </div>
+                                <div class="risk-details">
+                                    <div class="risk-detail-item">
+                                        Max Losses Row
+                                        <div id="risk-detail-losses" class="risk-detail-value">-</div>
+                                    </div>
+                                    <div class="risk-detail-item">
+                                        Open Trades
+                                        <div id="risk-detail-exposure" class="risk-detail-value">-</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="fraud-card" style="width: 100%; margin: 0; background: rgba(30, 41, 59, 0.45); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; text-align: center; height: 100%;">
+                                <h3 style="margin-bottom: 0.5rem; width: 100%; text-align: left; display: flex; justify-content: space-between; align-items: center;">
+                                    Fraud Anomaly Monitor
+                                    <span id="fraud-status-badge" class="badge" style="font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 20px; font-weight: 700; text-transform: uppercase; color: #fff; background-color: #00e676;">SECURE</span>
+                                </h3>
+                                <div class="fraud-gauge-container" style="position: relative; width: 100px; height: 100px; margin: 0.5rem 0;">
+                                    <svg viewBox="0 0 100 100" style="transform: rotate(-90deg); width: 100%; height: 100%;">
+                                        <circle cx="50" cy="50" r="40" style="fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 8;"></circle>
+                                        <circle id="fraud-fill" cx="50" cy="50" r="40" style="fill: none; stroke: #00e676; stroke-width: 8; stroke-dasharray: 251.2; stroke-dashoffset: 251.2; stroke-linecap: round; transition: stroke-dashoffset 0.8s ease, stroke 0.8s ease;"></circle>
+                                    </svg>
+                                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center;">
+                                        <span id="fraud-score-display" style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary);">0</span>
+                                        <span style="font-size: 0.5rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Anomaly Score</span>
+                                    </div>
+                                </div>
+                                <div id="fraud-description" style="font-size: 0.8rem; color: var(--text-secondary); text-align: center; margin-top: 0.2rem; min-height: 24px;">No anomalies detected</div>
+                                <div class="fraud-alerts-list" id="fraud-alerts-list" style="width: 100%; margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem; text-align: left; font-size: 0.75rem; min-height: 70px;">
+                                    <!-- Dynamic alerts go here -->
+                                </div>
+                            </div>
+
+                            <div class="buy-sell-card" style="width: 100%; margin: 0; background: rgba(30, 41, 59, 0.45); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; text-align: center; height: 100%;">
+                                <h3 style="margin-bottom: 0.5rem; width: 100%; text-align: left; display: flex; justify-content: space-between; align-items: center;">
+                                    Buy / Sell Ratio
+                                    <span id="buy-sell-dominant-badge" class="badge" style="font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 20px; font-weight: 700; text-transform: uppercase; color: #fff; background-color: var(--accent);">NEUTRAL</span>
+                                </h3>
+                                <div class="ratio-bar-wrapper" style="width: 100%; margin: 0.8rem 0;">
+                                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.25rem;">
+                                        <span id="buy-ratio-text">BUY: 50%</span>
+                                        <span id="sell-ratio-text">SELL: 50%</span>
+                                    </div>
+                                    <div class="ratio-progress-bar" style="width: 100%; height: 12px; background-color: rgba(255,255,255,0.05); border-radius: 6px; overflow: hidden; display: flex;">
+                                        <div id="buy-ratio-fill" style="width: 50%; height: 100%; background: linear-gradient(90deg, #10b981, #059669); transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+                                        <div id="sell-ratio-fill" style="width: 50%; height: 100%; background: linear-gradient(90deg, #ef4444, #dc2626); transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);"></div>
+                                    </div>
+                                </div>
+                                <div class="buy-sell-details" style="width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; border-top: 1px solid var(--border); padding-top: 0.75rem; font-size: 0.75rem; text-align: left; margin-top: auto;">
+                                    <div style="border-right: 1px solid var(--border); padding-right: 0.5rem;">
+                                        <h4 style="color: #10b981; margin-bottom: 0.25rem; font-size: 0.8rem; font-weight: 600;">Long (BUY)</h4>
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+                                            <span style="color: var(--text-secondary);">Trades:</span>
+                                            <span id="buy-count-val" style="font-weight: 600;">0</span>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+                                            <span style="color: var(--text-secondary);">Win Rate:</span>
+                                            <span id="buy-winrate-val" style="font-weight: 600;">0%</span>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span style="color: var(--text-secondary);">Net PnL:</span>
+                                            <span id="buy-pnl-val" style="font-weight: 600;">₹0.00</span>
+                                        </div>
+                                    </div>
+                                    <div style="padding-left: 0.25rem;">
+                                        <h4 style="color: #ef4444; margin-bottom: 0.25rem; font-size: 0.8rem; font-weight: 600;">Short (SELL)</h4>
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+                                            <span style="color: var(--text-secondary);">Trades:</span>
+                                            <span id="sell-count-val" style="font-weight: 600;">0</span>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+                                            <span style="color: var(--text-secondary);">Win Rate:</span>
+                                            <span id="sell-winrate-val" style="font-weight: 600;">0%</span>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span style="color: var(--text-secondary);">Net PnL:</span>
+                                            <span id="sell-pnl-val" style="font-weight: 600;">₹0.00</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="recent-trades-container">
+                            <div class="section-header">
+                                <h3>Recent Trades</h3>
+                            </div>
+                            <div id="overview-trades-grid" class="trades-grid">
+                                <!-- Trade blocks will be injected here -->
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Trade History Section -->
+                    <section id="history-section" class="section">
+                        <div class="journal-card">
+                            <div class="journal-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                                <h3>Trade History</h3>
+                                <div class="filter-group" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                    <input type="text" id="history-search-symbol" placeholder="Search Symbol..." style="background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 6px; padding: 0.4rem 0.75rem; color: #fff; font-size: 0.8rem; outline: none;">
+                                    <select id="history-filter-type" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 6px; padding: 0.4rem 0.75rem; color: #fff; font-size: 0.8rem; outline: none;">
+                                        <option value="ALL">All Types</option>
+                                        <option value="BUY">BUY</option>
+                                        <option value="SELL">SELL</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="trades-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Entry Date</th>
+                                            <th>Exit Date</th>
+                                            <th>Symbol</th>
+                                            <th>Type</th>
+                                            <th>Quantity</th>
+                                            <th>Entry Price</th>
+                                            <th>Exit Price</th>
+                                            <th>PnL</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="history-tbody">
+                                        <!-- Closed trades will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="history-summary-container" style="margin-top: 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+                            <!-- Time Analysis Card -->
+                            <div class="summary-card" style="background-color: var(--bg-card); padding: 1.5rem; border-radius: 10px; border: 1px solid var(--border);">
+                                <h3 style="font-size: 1rem; color: var(--text-primary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                                    <span>⏱️</span> Hold Time Analysis (Time)
+                                </h3>
+                                <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.85rem;">
+                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
+                                        <span style="color: var(--text-secondary);">Average Hold Time (Overall):</span>
+                                        <span id="history-hold-overall" style="font-weight: 600;">-</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
+                                        <span style="color: var(--text-secondary);">Winning Trades Hold Time:</span>
+                                        <span id="history-hold-winning" style="font-weight: 600; color: var(--success);">-</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding-bottom: 0.25rem;">
+                                        <span style="color: var(--text-secondary);">Losing Trades Hold Time:</span>
+                                        <span id="history-hold-losing" style="font-weight: 600; color: var(--danger);">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- History Summary Card -->
+                            <div class="summary-card" style="background-color: var(--bg-card); padding: 1.5rem; border-radius: 10px; border: 1px solid var(--border);">
+                                <h3 style="font-size: 1rem; color: var(--text-primary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                                    <span>📊</span> Performance Summary (History)
+                                </h3>
+                                <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.85rem;">
+                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
+                                        <span style="color: var(--text-secondary);">Total Closed Trades:</span>
+                                        <span id="history-total-closed" style="font-weight: 600;">-</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem;">
+                                        <span style="color: var(--text-secondary);">Win / Loss Ratio:</span>
+                                        <span id="history-win-loss" style="font-weight: 600;">-</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding-bottom: 0.25rem;">
+                                        <span style="color: var(--text-secondary);">Total Realized PnL:</span>
+                                        <span id="history-realized-pnl" style="font-weight: 600;">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- New Trade Modal -->
+    <div id="trade-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 id="trade-modal-title">Log Trade</h2>
+            <form id="trade-form">
+                <input type="hidden" id="trade-id" value="">
+                <div class="form-row">
+                    <div class="input-group">
+                        <label for="trade-symbol">Symbol</label>
+                        <input type="text" id="trade-symbol" required placeholder="e.g. AAPL">
+                    </div>
+                    <div class="input-group">
+                        <label for="trade-type">Type</label>
+                        <select id="trade-type" required>
+                            <option value="BUY">Long (Buy)</option>
+                            <option value="SELL">Short (Sell)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="input-group">
+                        <label for="trade-quantity">Quantity</label>
+                        <input type="number" id="trade-quantity" step="any" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="trade-status">Status</label>
+                        <select id="trade-status" required>
+                            <option value="OPEN">Open</option>
+                            <option value="CLOSED">Closed</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="input-group">
+                        <label for="trade-entry">Entry Price</label>
+                        <input type="number" id="trade-entry" step="any" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="trade-exit">Exit Price</label>
+                        <input type="number" id="trade-exit" step="any">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="input-group">
+                        <label for="trade-entry-date">Entry Date</label>
+                        <input type="date" id="trade-entry-date" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="trade-exit-date">Exit Date</label>
+                        <input type="date" id="trade-exit-date">
+                    </div>
+                </div>
+                <button type="submit" id="trade-submit-btn" class="btn primary-btn w-100">Save Trade</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div id="profile-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Edit Profile</h2>
+            <form id="profile-form">
+                <div class="input-group">
+                    <label for="profile-user-id">User ID (Custom)</label>
+                    <input type="text" id="profile-user-id" name="username" autocomplete="username" placeholder="e.g. TraderX">
+                </div>
+                <div class="input-group">
+                    <label for="profile-phone">Phone Number</label>
+                    <input type="tel" id="profile-phone" name="phone" autocomplete="tel" placeholder="Your phone number">
+                </div>
+                <div class="input-group">
+                    <label for="profile-email">Email</label>
+                    <input type="email" id="profile-email" name="email" autocomplete="email" placeholder="Your email address">
+                </div>
+                <div class="input-group">
+                    <label for="profile-broker">Broker Name</label>
+                    <input type="text" id="profile-broker" name="broker" list="broker-options" autocomplete="off" placeholder="e.g. Binance">
+                    <datalist id="broker-options">
+                        <option value="Binance"></option>
+                        <option value="Coinbase"></option>
+                        <option value="Robinhood"></option>
+                        <option value="Interactive Brokers"></option>
+                        <option value="MetaTrader 4/5"></option>
+                        <option value="TradeStation"></option>
+                        <option value="OANDA"></option>
+                        <option value="TD Ameritrade"></option>
+                        <option value="E*TRADE"></option>
+                        <option value="Charles Schwab"></option>
+                        <option value="Fidelity"></option>
+                        <option value="Webull"></option>
+                        <option value="Kraken"></option>
+                        <option value="Bybit"></option>
+                    </datalist>
+                </div>
+                <div class="input-group">
+                    <label for="profile-joined-date">Login Date</label>
+                    <input type="date" id="profile-joined-date" readonly>
+                </div>
+                <div class="input-group">
+                    <label for="profile-location">Location</label>
+                    <input type="text" id="profile-location" name="location" placeholder="e.g. Mumbai, India">
+                </div>
+                <div class="input-group">
+                    <label for="profile-balance">Initial Balance (₹)</label>
+                    <input type="number" id="profile-balance" name="balance" step="any" placeholder="e.g. 10000.00">
+                </div>
+                <button type="submit" class="btn primary-btn w-100">Save Profile</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- AI Chatbot Assistant -->
+    <div id="ai-chat-widget" class="chat-widget">
+        <button id="chat-toggle-btn" class="chat-toggle-btn" title="AI Assistant">
+            <span class="chat-icon">💬</span>
+            <span class="chat-text">AI Copilot</span>
+        </button>
+        <div id="chat-window" class="chat-window">
+            <div class="chat-header">
+                <div class="chat-header-info">
+                    <span class="chat-header-dot"></span>
+                    <span class="chat-header-title">TradeLens AI Copilot</span>
+                </div>
+                <button id="chat-close-btn" class="chat-close-btn">&times;</button>
+            </div>
+            <div id="chat-messages" class="chat-messages">
+                <div class="chat-msg assistant">
+                    Hello! I am your TradeLens AI Copilot. Ask me questions about your trading performance, win rate, risk score, or best symbols!
+                </div>
+            </div>
+            <form id="chat-form" class="chat-form">
+                <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off">
+                <button type="submit" class="chat-send-btn">Send</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
