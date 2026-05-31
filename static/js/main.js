@@ -594,6 +594,94 @@ document.addEventListener('DOMContentLoaded', () => {
             historyRealizedPnl.className = totalRealizedPnl > 0 ? 'positive' : (totalRealizedPnl < 0 ? 'negative' : '');
         }
 
+        // Update Performance Status Bar inside Trade History Page
+        const histPerfBadge = document.getElementById('history-performance-badge');
+        const histPerfDesc = document.getElementById('history-performance-desc');
+        if (histPerfBadge && histPerfDesc) {
+            let label = 'No Data';
+            let desc = 'Log closed trades to evaluate';
+            let bg = 'rgba(148, 163, 184, 0.1)';
+            let color = '#94a3b8';
+            let borderColor = 'rgba(148, 163, 184, 0.2)';
+
+            if (totalTradesCount > 0) {
+                if (winRate >= 60 && totalRealizedPnl > 0) {
+                    label = 'Excellent';
+                    desc = 'Highly profitable trading setup';
+                    bg = 'rgba(16, 185, 129, 0.1)';
+                    color = '#10b981';
+                    borderColor = 'rgba(16, 185, 129, 0.2)';
+                } else if (winRate >= 50 || totalRealizedPnl > 0) {
+                    label = 'Good';
+                    desc = 'Consistent positive performance';
+                    bg = 'rgba(99, 102, 241, 0.1)';
+                    color = '#6366f1';
+                    borderColor = 'rgba(99, 102, 241, 0.2)';
+                } else {
+                    label = 'Underperforming';
+                    desc = 'Refine risk & entry criteria';
+                    bg = 'rgba(239, 68, 68, 0.1)';
+                    color = '#ef4444';
+                    borderColor = 'rgba(239, 68, 68, 0.2)';
+                }
+            }
+
+            histPerfBadge.textContent = label;
+            histPerfBadge.style.background = bg;
+            histPerfBadge.style.color = color;
+            histPerfBadge.style.borderColor = borderColor;
+            histPerfDesc.textContent = desc;
+        }
+
+        const histPerfWinrate = document.getElementById('history-perf-winrate');
+        const histPerfLosrate = document.getElementById('history-perf-losrate');
+        const histPerfHoldtime = document.getElementById('history-perf-holdtime');
+
+        if (histPerfWinrate) {
+            histPerfWinrate.textContent = `Win Rate: ${winRate.toFixed(1)}%`;
+            const newWinLink = histPerfWinrate.cloneNode(true);
+            histPerfWinrate.parentNode.replaceChild(newWinLink, histPerfWinrate);
+            newWinLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                alert(`Win Rate: ${winRate.toFixed(1)}%`);
+            });
+        }
+        if (histPerfLosrate) {
+            histPerfLosrate.textContent = `Loss Rate: ${lossRate.toFixed(1)}%`;
+            const newLossLink = histPerfLosrate.cloneNode(true);
+            histPerfLosrate.parentNode.replaceChild(newLossLink, histPerfLosrate);
+            newLossLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                alert(`Loss Rate: ${lossRate.toFixed(1)}%`);
+            });
+        }
+        if (histPerfHoldtime) {
+            histPerfHoldtime.textContent = `Time: ${holdCount > 0 ? (totalHoldDays / holdCount).toFixed(1) + 'd' : '-'}`;
+            const newHoldLink = histPerfHoldtime.cloneNode(true);
+            histPerfHoldtime.parentNode.replaceChild(newHoldLink, histPerfHoldtime);
+            newHoldLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                const avgTotal = holdCount > 0 ? `${(totalHoldDays / holdCount).toFixed(1)} days` : 'N/A';
+                const avgWin = winHoldCount > 0 ? `${(winHoldDays / winHoldCount).toFixed(1)} days` : 'N/A';
+                const avgLoss = lossHoldCount > 0 ? `${(lossHoldDays / lossHoldCount).toFixed(1)} days` : 'N/A';
+                alert(`Average Holding Time:\n• Overall: ${avgTotal}\n• Winning Trades: ${avgWin}\n• Losing Trades: ${avgLoss}`);
+            });
+        }
+
+        // History link — scrolls to the trade table
+        const histPerfHistoryLink = document.getElementById('history-perf-history');
+        if (histPerfHistoryLink) {
+            const newHistLink = histPerfHistoryLink.cloneNode(true);
+            histPerfHistoryLink.parentNode.replaceChild(newHistLink, histPerfHistoryLink);
+            newHistLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                const table = document.getElementById('history-tbody');
+                if (table) {
+                    table.closest('table').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        }
+
         const filtered = closedTrades.filter(t => {
             const matchesSymbol = t.symbol.toUpperCase().includes(symbolFilter);
             const matchesType = typeFilter === 'ALL' || t.trade_type === typeFilter;

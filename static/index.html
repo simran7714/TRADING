@@ -278,6 +278,23 @@
 
                     <!-- Trade History Section -->
                     <section id="history-section" class="section">
+                        <!-- Performance Status Bar inside Trade History -->
+                        <div class="history-performance-status" style="background: rgba(30, 41, 59, 0.25); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <span id="history-performance-badge" style="padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; background: rgba(148, 163, 184, 0.1); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.2); display: inline-block;">No Data</span>
+                            </div>
+                            <div id="history-performance-desc" style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.3;">Log closed trades to evaluate</div>
+                            <div id="history-performance-stats" style="font-size: 0.8rem; color: var(--text-secondary); display: flex; gap: 0.75rem; align-items: center;">
+                                <a href="#" id="history-perf-winrate" class="subtopic">Win Rate: 0%</a>
+                                <span style="color: rgba(255,255,255,0.15)">|</span>
+                                <a href="#" id="history-perf-losrate" class="subtopic">Loss Rate: 0%</a>
+                                <span style="color: rgba(255,255,255,0.15)">|</span>
+                                <a href="#" id="history-perf-holdtime" class="subtopic">Time: -</a>
+                                <span style="color: rgba(255,255,255,0.15)">|</span>
+                                <a href="#" id="history-perf-history" class="subtopic">History</a>
+                            </div>
+                        </div>
+
                         <div class="journal-card">
                             <div class="journal-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                                 <h3>Trade History</h3>
