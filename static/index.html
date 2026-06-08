@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TradeLens | Secure Trading Data Analytics</title>
     <meta name="description" content="Monitor your trading activities, track profits and losses, and visualize portfolio performance.">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -15,6 +16,11 @@
 <body>
     <!-- App Container -->
     <div id="app">
+        <!-- Floating Theme Toggle Button -->
+        <button id="theme-toggle" class="theme-toggle-btn" title="Toggle Theme">
+            <span class="theme-icon">🌙</span>
+        </button>
+
         <!-- Auth View -->
         <div id="auth-view" class="view active">
             <div class="auth-container">
@@ -57,7 +63,19 @@
                         </div>
                         <div class="input-group" id="phone-group" style="display: none;">
                             <label for="phone">Phone Number</label>
-                            <input type="tel" id="phone" placeholder="Enter your phone number (optional)">
+                            <div class="phone-input-wrapper">
+                                <select id="phone-country-code">
+                                    <option value="+1">🇺🇸 +1</option>
+                                    <option value="+91">🇮🇳 +91</option>
+                                    <option value="+44">🇬🇧 +44</option>
+                                    <option value="+49">🇩🇪 +49</option>
+                                    <option value="+81">🇯🇵 +81</option>
+                                    <option value="+61">🇦🇺 +61</option>
+                                    <option value="+86">🇨🇳 +86</option>
+                                </select>
+                                <input type="tel" id="phone" placeholder="Enter your phone number (optional)">
+                            </div>
+                            <span id="phone-validation-msg" class="validation-msg"></span>
                         </div>
                         <div class="input-group" id="email-group" style="display: none;">
                             <label for="email">Email</label>
@@ -114,13 +132,37 @@
                     </div>
                 </nav>
                 <div class="sidebar-footer">
-                    <div class="trader-details">
-                        <p id="user-display">User</p>
-                        <p id="user-id-display" class="detail-text">ID: -</p>
-                        <p id="user-broker-display" class="detail-text">Broker: -</p>
-                        <p id="user-phone-display" class="detail-text">Phone: -</p>
-                        <p id="user-location-display" class="detail-text">Location: -</p>
-                        <p id="user-date-display" class="detail-text">Logged In: -</p>
+                    <!-- Sidebar Up/Down Slider Tabs -->
+                    <div class="sidebar-slider-tabs">
+                        <button type="button" class="sidebar-slider-tab active" data-slide="0">👤 Profile</button>
+                        <button type="button" class="sidebar-slider-tab" data-slide="1">🏛️ Bank & Funds</button>
+                    </div>
+
+                    <!-- Vertical Slider Viewport -->
+                    <div class="sidebar-slider-viewport">
+                        <div class="sidebar-slider-track" id="sidebar-slider-track">
+                            <!-- Slide 0: Trader Details -->
+                            <div class="sidebar-slide" data-slide-index="0">
+                                <div class="trader-details">
+                                    <p id="user-display">User</p>
+                                    <p id="user-id-display" class="detail-text">ID: -</p>
+                                    <p id="user-broker-display" class="detail-text">Broker: -</p>
+                                    <p id="user-phone-display" class="detail-text">Phone: -</p>
+                                    <p id="user-location-display" class="detail-text">Location: -</p>
+                                    <p id="support-phone-display" class="detail-text" style="color: var(--accent); font-weight: 500; font-size: 0.725rem; margin-top: 0.2rem;"></p>
+                                    <p id="user-date-display" class="detail-text">Logged In: -</p>
+                                </div>
+                            </div>
+                            <!-- Slide 1: Bank Account Card & Transfer Slider -->
+                            <div class="sidebar-slide" data-slide-index="1">
+                                <div id="user-bank-card-container" style="width: 100%;">
+                                    <!-- Rendered dynamically by main.js -->
+                                </div>
+                                <div id="sidebar-slider-container" style="width: 100%; margin-top: 0.5rem;">
+                                    <!-- Fund Allocation Slider rendered dynamically by main.js -->
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <button id="edit-profile-btn" class="btn primary-btn" style="margin-bottom: 0.5rem; width: 100%;">Edit Profile</button>
                     <button id="logout-btn" class="btn secondary-btn" style="width: 100%;">Back to Search</button>
@@ -129,7 +171,6 @@
             <main class="main-content">
                 <header class="topbar">
                     <h1>Overview</h1>
-                    <button id="new-trade-btn" class="btn primary-btn">+ New Trade</button>
                 </header>
 
                 <div class="content-sections">
@@ -435,58 +476,185 @@
 
     <!-- Profile Modal -->
     <div id="profile-modal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content profile-modal-content">
             <span class="close-modal">&times;</span>
-            <h2>Edit Profile</h2>
-            <form id="profile-form">
-                <div class="input-group">
-                    <label for="profile-user-id">User ID (Custom)</label>
-                    <input type="text" id="profile-user-id" name="username" autocomplete="username" placeholder="e.g. TraderX">
+
+            <!-- Tab Navigation -->
+            <div class="profile-tabs">
+                <button class="profile-tab active" data-tab="edit-profile-tab" id="tab-edit-profile">
+                    ✏️ Edit Profile
+                </button>
+                <button class="profile-tab" data-tab="withdraw-tab" id="tab-withdraw">
+                    💸 Withdraw Funds
+                </button>
+            </div>
+
+            <!-- Edit Profile Tab -->
+            <div id="edit-profile-tab" class="profile-tab-content active">
+                <form id="profile-form">
+                    <div class="input-group">
+                        <label for="profile-user-id">User ID (Custom)</label>
+                        <input type="text" id="profile-user-id" name="username" autocomplete="username" placeholder="e.g. TraderX">
+                    </div>
+                    <div class="input-group">
+                        <label for="profile-phone">Phone Number</label>
+                        <div class="phone-input-wrapper">
+                            <select id="profile-phone-country-code">
+                                <option value="+1">🇺🇸 +1</option>
+                                <option value="+91">🇮🇳 +91</option>
+                                <option value="+44">🇬🇧 +44</option>
+                                <option value="+49">🇩🇪 +49</option>
+                                <option value="+81">🇯🇵 +81</option>
+                                <option value="+61">🇦🇺 +61</option>
+                                <option value="+86">🇨🇳 +86</option>
+                            </select>
+                            <input type="tel" id="profile-phone" name="phone" autocomplete="tel" placeholder="Your phone number">
+                        </div>
+                        <span id="profile-phone-validation-msg" class="validation-msg"></span>
+                    </div>
+                    <div class="input-group">
+                        <label for="profile-email">Email</label>
+                        <input type="email" id="profile-email" name="email" autocomplete="email" placeholder="Your email address">
+                    </div>
+                    <div class="input-group">
+                        <label for="profile-broker">Broker Name</label>
+                        <input type="text" id="profile-broker" name="broker" list="broker-options" autocomplete="off" placeholder="e.g. Binance">
+                        <datalist id="broker-options">
+                            <option value="Binance"></option>
+                            <option value="Coinbase"></option>
+                            <option value="Robinhood"></option>
+                            <option value="Interactive Brokers"></option>
+                            <option value="MetaTrader 4/5"></option>
+                            <option value="TradeStation"></option>
+                            <option value="OANDA"></option>
+                            <option value="TD Ameritrade"></option>
+                            <option value="E*TRADE"></option>
+                            <option value="Charles Schwab"></option>
+                            <option value="Fidelity"></option>
+                            <option value="Webull"></option>
+                            <option value="Kraken"></option>
+                            <option value="Bybit"></option>
+                        </datalist>
+                    </div>
+                    <div class="input-group">
+                        <label for="profile-joined-date">Login Date</label>
+                        <input type="date" id="profile-joined-date" readonly>
+                    </div>
+                    <div class="input-group">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                            <label for="profile-location" style="margin: 0;">Location</label>
+                            <button type="button" id="auto-detect-location-btn" style="background: none; border: none; color: var(--accent); font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 2px; font-weight: 600; padding: 0;">
+                                📍 Auto-Detect
+                            </button>
+                        </div>
+                        <input type="text" id="profile-location" name="location" placeholder="e.g. Mumbai, India">
+                    </div>
+                    <div class="input-group">
+                        <label for="profile-bank-name">Bank Name</label>
+                        <input type="text" id="profile-bank-name" name="bank_name" list="banks-list" placeholder="e.g. Chase Bank">
+                        <datalist id="banks-list">
+                            <!-- Populated dynamically via JS based on location -->
+                        </datalist>
+                    </div>
+                    <div class="input-group">
+                        <label for="profile-bank-acc">Bank Account Number</label>
+                        <input type="text" id="profile-bank-acc" name="bank_account_no" placeholder="e.g. 1234567890">
+                    </div>
+                    <div class="input-group">
+                        <label for="profile-balance">Initial Balance (₹)</label>
+                        <input type="number" id="profile-balance" name="balance" step="any" placeholder="e.g. 10000.00">
+                    </div>
+                    <button type="submit" class="btn primary-btn w-100">Save Profile</button>
+                </form>
+            </div>
+
+            <!-- Withdraw Funds Tab -->
+            <div id="withdraw-tab" class="profile-tab-content">
+                <div class="withdraw-panel">
+
+                    <!-- Current Balance Display -->
+                    <div class="withdraw-balance-section">
+                        <div class="withdraw-balance-label">Available Trading Balance</div>
+                        <div class="withdraw-balance-amount" id="withdraw-current-balance">₹0.00</div>
+                        <div class="withdraw-balance-sub">Funds will be sent to your linked bank</div>
+                    </div>
+
+                    <!-- Destination Bank Card -->
+                    <div class="withdraw-bank-dest" id="withdraw-bank-dest">
+                        <div class="withdraw-bank-dest-icon">🏛️</div>
+                        <div class="withdraw-bank-dest-info">
+                            <div class="withdraw-bank-dest-name" id="withdraw-dest-bank-name">No bank linked</div>
+                            <div class="withdraw-bank-dest-acc" id="withdraw-dest-bank-acc">Link a bank account first</div>
+                        </div>
+                        <div class="withdraw-bank-dest-badge" id="withdraw-linked-badge">—</div>
+                    </div>
+
+                    <!-- Amount Input -->
+                    <div class="withdraw-amount-section">
+                        <label class="withdraw-label">Withdrawal Amount</label>
+                        <div class="withdraw-input-wrapper">
+                            <span class="withdraw-currency-symbol">₹</span>
+                            <input
+                                type="number"
+                                id="withdraw-amount-input"
+                                class="withdraw-amount-input"
+                                placeholder="0.00"
+                                min="0"
+                                step="100"
+                            >
+                        </div>
+
+                        <!-- Quick Amount Chips -->
+                        <div class="withdraw-quick-chips" id="withdraw-quick-chips">
+                            <button type="button" class="withdraw-chip" data-pct="0.25">25%</button>
+                            <button type="button" class="withdraw-chip" data-pct="0.50">50%</button>
+                            <button type="button" class="withdraw-chip" data-pct="0.75">75%</button>
+                            <button type="button" class="withdraw-chip" data-pct="1.00">Max</button>
+                        </div>
+
+                        <!-- Slider -->
+                        <input
+                            type="range"
+                            id="withdraw-slider"
+                            class="withdraw-slider"
+                            min="0"
+                            max="100000"
+                            step="100"
+                            value="0"
+                        >
+                        <div class="withdraw-slider-minmax">
+                            <span>₹0</span>
+                            <span id="withdraw-slider-max-label">₹0</span>
+                        </div>
+                    </div>
+
+                    <!-- Summary Row -->
+                    <div class="withdraw-summary" id="withdraw-summary">
+                        <div class="withdraw-summary-row">
+                            <span>Withdraw Amount</span>
+                            <span id="withdraw-summary-amount" class="withdraw-summary-val">₹0.00</span>
+                        </div>
+                        <div class="withdraw-summary-row">
+                            <span>Remaining Balance</span>
+                            <span id="withdraw-summary-remaining" class="withdraw-summary-val">₹0.00</span>
+                        </div>
+                        <div class="withdraw-summary-row" style="border-top: 1px solid var(--border); padding-top: 0.5rem; margin-top: 0.25rem;">
+                            <span>Processing Time</span>
+                            <span class="withdraw-summary-val" style="color: #a78bfa;">Instant</span>
+                        </div>
+                    </div>
+
+                    <!-- Confirm Button -->
+                    <button id="withdraw-confirm-btn" class="withdraw-confirm-btn" disabled>
+                        💸 Confirm Withdrawal
+                    </button>
+                    <p class="withdraw-disclaimer">Funds are credited to your simulated bank balance instantly.</p>
                 </div>
-                <div class="input-group">
-                    <label for="profile-phone">Phone Number</label>
-                    <input type="tel" id="profile-phone" name="phone" autocomplete="tel" placeholder="Your phone number">
-                </div>
-                <div class="input-group">
-                    <label for="profile-email">Email</label>
-                    <input type="email" id="profile-email" name="email" autocomplete="email" placeholder="Your email address">
-                </div>
-                <div class="input-group">
-                    <label for="profile-broker">Broker Name</label>
-                    <input type="text" id="profile-broker" name="broker" list="broker-options" autocomplete="off" placeholder="e.g. Binance">
-                    <datalist id="broker-options">
-                        <option value="Binance"></option>
-                        <option value="Coinbase"></option>
-                        <option value="Robinhood"></option>
-                        <option value="Interactive Brokers"></option>
-                        <option value="MetaTrader 4/5"></option>
-                        <option value="TradeStation"></option>
-                        <option value="OANDA"></option>
-                        <option value="TD Ameritrade"></option>
-                        <option value="E*TRADE"></option>
-                        <option value="Charles Schwab"></option>
-                        <option value="Fidelity"></option>
-                        <option value="Webull"></option>
-                        <option value="Kraken"></option>
-                        <option value="Bybit"></option>
-                    </datalist>
-                </div>
-                <div class="input-group">
-                    <label for="profile-joined-date">Login Date</label>
-                    <input type="date" id="profile-joined-date" readonly>
-                </div>
-                <div class="input-group">
-                    <label for="profile-location">Location</label>
-                    <input type="text" id="profile-location" name="location" placeholder="e.g. Mumbai, India">
-                </div>
-                <div class="input-group">
-                    <label for="profile-balance">Initial Balance (₹)</label>
-                    <input type="number" id="profile-balance" name="balance" step="any" placeholder="e.g. 10000.00">
-                </div>
-                <button type="submit" class="btn primary-btn w-100">Save Profile</button>
-            </form>
+            </div>
+
         </div>
     </div>
+
 
     <!-- AI Chatbot Assistant -->
     <div id="ai-chat-widget" class="chat-widget">

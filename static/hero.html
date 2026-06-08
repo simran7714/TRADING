@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradeLens — Analyze Your Trading Edge</title>
+    <meta name="description" content="TradeLens is a premium trading analytics platform to track PnL, win rates, risk profiles, and AI-powered insights.">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif}
+        :root{--accent:#6366f1;--accent2:#8b5cf6;--text:#0f172a;--text2:#64748b;--border:#e2e8f0;--bg:#f8fafc;--card:#fff}
+        body{background:var(--bg);color:var(--text);overflow-x:hidden}
+
+        /* NAV */
+        nav{display:flex;justify-content:space-between;align-items:center;padding:1.25rem 4rem;position:fixed;top:0;left:0;right:0;background:rgba(255,255,255,0.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);z-index:1000}
+        .nav-logo{font-size:1.3rem;font-weight:800;background:linear-gradient(135deg,#6366f1,#8b5cf6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+        .nav-links{display:flex;gap:2rem;align-items:center}
+        .nav-links a{color:var(--text2);text-decoration:none;font-size:0.9rem;font-weight:500;transition:color 0.2s}
+        .nav-links a:hover{color:var(--accent)}
+        .nav-cta{background:var(--accent);color:#fff!important;padding:0.5rem 1.25rem;border-radius:8px;font-weight:600!important;transition:all 0.2s!important}
+        .nav-cta:hover{background:#4f46e5!important;transform:translateY(-1px)}
+
+        /* HERO */
+        .hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:8rem 2rem 4rem;position:relative;overflow:hidden}
+        .hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(99,102,241,0.12),transparent),radial-gradient(ellipse 40% 40% at 80% 80%,rgba(139,92,246,0.08),transparent);pointer-events:none}
+        .hero-badge{display:inline-flex;align-items:center;gap:0.4rem;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);color:var(--accent);padding:0.4rem 1rem;border-radius:20px;font-size:0.8rem;font-weight:600;margin-bottom:1.5rem;animation:fadeDown 0.6s ease}
+        .hero h1{font-size:clamp(2.5rem,6vw,4.5rem);font-weight:900;line-height:1.1;max-width:800px;margin-bottom:1.5rem;animation:fadeDown 0.7s ease;letter-spacing:-1.5px}
+        .hero h1 span{background:linear-gradient(135deg,#6366f1,#8b5cf6,#ec4899);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+        .hero p{font-size:1.15rem;color:var(--text2);max-width:560px;line-height:1.7;margin-bottom:2.5rem;animation:fadeDown 0.8s ease}
+        .hero-btns{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;animation:fadeDown 0.9s ease}
+        .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;padding:0.85rem 2rem;border-radius:10px;font-size:1rem;font-weight:700;text-decoration:none;transition:all 0.25s;box-shadow:0 4px 20px rgba(99,102,241,0.35)}
+        .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(99,102,241,0.45)}
+        .btn-secondary{background:#fff;color:var(--text);padding:0.85rem 2rem;border-radius:10px;font-size:1rem;font-weight:600;text-decoration:none;border:1px solid var(--border);transition:all 0.25s;box-shadow:0 2px 8px rgba(0,0,0,0.04)}
+        .btn-secondary:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px)}
+
+        /* STATS BAR */
+        .stats-bar{display:flex;gap:3rem;justify-content:center;flex-wrap:wrap;padding:2rem 4rem;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:#fff}
+        .stat{text-align:center}
+        .stat-num{font-size:1.8rem;font-weight:800;background:linear-gradient(135deg,#6366f1,#8b5cf6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+        .stat-label{font-size:0.8rem;color:var(--text2);font-weight:500;margin-top:2px}
+
+        /* FEATURES */
+        .section{padding:5rem 4rem;max-width:1200px;margin:0 auto}
+        .section-label{display:inline-block;color:var(--accent);font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:0.75rem}
+        .section-title{font-size:clamp(1.8rem,3vw,2.5rem);font-weight:800;margin-bottom:1rem;letter-spacing:-0.5px}
+        .section-sub{color:var(--text2);font-size:1.05rem;line-height:1.7;max-width:540px;margin-bottom:3rem}
+        .features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem}
+        .feature-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2rem;transition:all 0.25s;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+        .feature-card:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,0.08);border-color:rgba(99,102,241,0.2)}
+        .feature-icon{font-size:1.8rem;margin-bottom:1rem;display:block}
+        .feature-card h3{font-size:1.05rem;font-weight:700;margin-bottom:0.5rem}
+        .feature-card p{color:var(--text2);font-size:0.88rem;line-height:1.6}
+
+        /* CTA SECTION */
+        .cta-section{background:linear-gradient(135deg,#6366f1,#8b5cf6);padding:5rem 2rem;text-align:center;color:#fff}
+        .cta-section h2{font-size:clamp(1.8rem,3vw,2.5rem);font-weight:800;margin-bottom:1rem;letter-spacing:-0.5px}
+        .cta-section p{opacity:0.85;margin-bottom:2rem;font-size:1.05rem;max-width:480px;margin-left:auto;margin-right:auto}
+        .btn-white{background:#fff;color:var(--accent);padding:0.9rem 2.5rem;border-radius:10px;font-size:1rem;font-weight:700;text-decoration:none;transition:all 0.25s;display:inline-block}
+        .btn-white:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.15)}
+
+        /* FOOTER */
+        footer{background:#fff;border-top:1px solid var(--border);padding:2rem 4rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+        footer p{color:var(--text2);font-size:0.85rem}
+
+        @keyframes fadeDown{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
+
+        /* MOBILE */
+        @media(max-width:768px){
+            nav{padding:1rem 1.5rem}
+            .nav-links{gap:1rem}
+            .nav-links a:not(.nav-cta){display:none}
+            .hero{padding:7rem 1.5rem 3rem}
+            .stats-bar{padding:2rem 1.5rem;gap:2rem}
+            .section{padding:3rem 1.5rem}
+            footer{padding:1.5rem;flex-direction:column;text-align:center}
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-logo">TradeLens</div>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#about">About</a>
+            <a href="/login" class="nav-cta">Get Started →</a>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-badge">✨ AI-Powered Trading Analytics</div>
+        <h1>Analyze Your<br><span>Trading Edge</span></h1>
+        <p>TradeLens gives you deep insight into your trades — PnL tracking, risk profiling, fraud detection, and AI-powered coaching in one clean dashboard.</p>
+        <div class="hero-btns">
+            <a href="/login" class="btn-primary">Start Analyzing Free →</a>
+            <a href="#features" class="btn-secondary">See Features</a>
+        </div>
+    </section>
+
+    <div class="stats-bar">
+        <div class="stat"><div class="stat-num">10K+</div><div class="stat-label">Trades Analyzed</div></div>
+        <div class="stat"><div class="stat-num">99%</div><div class="stat-label">Uptime</div></div>
+        <div class="stat"><div class="stat-num">AI</div><div class="stat-label">Powered Insights</div></div>
+        <div class="stat"><div class="stat-num">Real-time</div><div class="stat-label">Market Charts</div></div>
+    </div>
+
+    <div id="features" style="max-width:1200px;margin:0 auto;padding:5rem 4rem 3rem">
+        <div class="section-label">Features</div>
+        <div class="section-title">Everything you need to trade smarter</div>
+        <p class="section-sub">From real-time market charts to AI risk profiles, TradeLens covers every angle of your performance.</p>
+        <div class="features-grid">
+            <div class="feature-card"><span class="feature-icon">📊</span><h3>PnL Dashboard</h3><p>Track your real-time profit & loss across all positions with clean visual summaries.</p></div>
+            <div class="feature-card"><span class="feature-icon">🤖</span><h3>AI Copilot</h3><p>Ask your AI trading assistant about win rates, risk exposure, best symbols, and strategies.</p></div>
+            <div class="feature-card"><span class="feature-icon">⚡</span><h3>Risk Profiler</h3><p>Visualize your risk score dynamically based on open exposure and consecutive losses.</p></div>
+            <div class="feature-card"><span class="feature-icon">🔍</span><h3>Fraud Detection</h3><p>Automatic anomaly monitoring flags wash trades, HFT spam, and unusual sizing patterns.</p></div>
+            <div class="feature-card"><span class="feature-icon">📈</span><h3>Market Charts</h3><p>Live BTC/USD candlestick chart with SMC/ICT overlays powered by TradingView Lightweight.</p></div>
+            <div class="feature-card"><span class="feature-icon">🏦</span><h3>Bank Integration</h3><p>Link your bank account and manage fund allocations and simulated withdrawals.</p></div>
+        </div>
+    </div>
+
+    <div class="cta-section">
+        <h2>Ready to level up your trading?</h2>
+        <p>Join TradeLens today — it takes under 30 seconds to create your account.</p>
+        <a href="/login" class="btn-white">Create Free Account →</a>
+    </div>
+
+    <footer>
+        <div class="nav-logo">TradeLens</div>
+        <p>© 2026 TradeLens. All rights reserved.</p>
+        <p style="font-size:0.8rem;color:#94a3b8">Built for traders, by traders.</p>
+    </footer>
+</body>
+</html>

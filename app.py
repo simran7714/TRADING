@@ -3,94 +3,135 @@ import database
 import os
 import random
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__, static_folder='static', static_url_path='')
-app.secret_key = 'super_secret_key_for_development'
+app.secret_key = os.getenv('FLASK_SECRET', 'tradelens_dev_secret')
 
-def ensure_user_profile_populated(user_id, username, custom_user_id, phone_number, email, broker_name, location):
+def validate_phone_number(phone_number):
+    if not phone_number:
+        return True, ""
+    cleaned = ''.join(c for c in phone_number if c.isdigit() or c == '+')
+    if not cleaned.startswith('+'):
+        return False, "Phone number must start with a country dial code (e.g. +91)."
+        
+    if cleaned.startswith('+91'):
+        num = cleaned[3:]
+        if len(num) != 10 or not num.isdigit() or num[0] not in '6789':
+            return False, "Indian phone numbers must be exactly 10 digits and start with 6, 7, 8, or 9."
+    elif cleaned.startswith('+1'):
+        num = cleaned[2:]
+        if len(num) != 10 or not num.isdigit():
+            return False, "US/Canada phone numbers must be exactly 10 digits."
+    elif cleaned.startswith('+44'):
+        num = cleaned[3:]
+        if len(num) != 10 or not num.isdigit():
+            return False, "UK phone numbers must be exactly 10 digits."
+    elif cleaned.startswith('+49'):
+        num = cleaned[3:]
+        if len(num) < 10 or len(num) > 11 or not num.isdigit():
+            return False, "German phone numbers must be 10 or 11 digits."
+    elif cleaned.startswith('+81'):
+        num = cleaned[3:]
+        if len(num) < 9 or len(num) > 10 or not num.isdigit():
+            return False, "Japanese phone numbers must be 9 or 10 digits."
+    elif cleaned.startswith('+61'):
+        num = cleaned[3:]
+        if len(num) != 9 or not num.isdigit():
+            return False, "Australian phone numbers must be exactly 9 digits."
+    elif cleaned.startswith('+86'):
+        num = cleaned[3:]
+        if len(num) != 11 or not num.isdigit() or num[0] != '1':
+            return False, "Chinese phone numbers must be exactly 11 digits and start with 1."
+    else:
+        digits = ''.join(c for c in cleaned if c.isdigit())
+        if len(digits) < 7 or len(digits) > 15:
+            return False, "Phone number must be between 7 and 15 digits."
+            
+    return True, ""
+
+def ensure_user_profile_populated(user_id, username, custom_user_id, phone_number, email, broker_name, location, bank_name=None, bank_account_no=None):
     updated = False
-    new_custom_user_id = custom_user_id
-    new_phone_number = phone_number
-    new_email = email
-    new_broker_name = broker_name
-    new_location = location
+    updates = {}
 
     if not custom_user_id:
-        new_custom_user_id = f"TL-{user_id:04d}"
+        updates['custom_user_id'] = f"TL-{user_id:04d}"
         updated = True
     if not phone_number:
-        country_codes = ["1", "44", "91", "49", "81", "33", "61", "86"]
+        country_codes = ["1","44","91","49","81","61","86"]
         cc = country_codes[user_id % len(country_codes)]
-        new_phone_number = f"+{cc}{555000000 + user_id}"
+        updates['phone_number'] = f"+{cc} 5550000{user_id % 100:02d}"
         updated = True
     if not email:
-        new_email = f"{username.lower()}@tradelens.com"
+        updates['email'] = f"{username.lower()}@tradelens.com"
         updated = True
     if not broker_name:
-        brokers = ["Binance", "Interactive Brokers", "TradeStation", "OANDA"]
-        new_broker_name = brokers[user_id % len(brokers)]
+        brokers = ["Binance","Interactive Brokers","TradeStation","OANDA"]
+        updates['broker_name'] = brokers[user_id % len(brokers)]
         updated = True
     if not location:
-        locations = ["New York, USA", "London, UK", "Mumbai, India", "Berlin, Germany", "Tokyo, Japan", "Paris, France", "Sydney, Australia", "Shanghai, China"]
-        new_location = locations[user_id % len(locations)]
+        locations = ["New York, USA","London, UK","Mumbai, India","Berlin, Germany","Tokyo, Japan","Sydney, Australia"]
+        updates['location'] = locations[user_id % len(locations)]
+        updated = True
+    if not bank_name:
+        loc = (updates.get('location', location) or '').lower()
+        if 'india' in loc or 'mumbai' in loc: banks = ["HDFC Bank","SBI","ICICI Bank","Axis Bank"]
+        elif 'usa' in loc or 'new york' in loc: banks = ["Chase Bank","Bank of America","Wells Fargo"]
+        elif 'uk' in loc or 'london' in loc: banks = ["Barclays","HSBC","Lloyds Bank"]
+        elif 'germany' in loc or 'berlin' in loc: banks = ["Deutsche Bank","Commerzbank","N26"]
+        elif 'japan' in loc or 'tokyo' in loc: banks = ["MUFG Bank","Mizuho Bank"]
+        elif 'australia' in loc or 'sydney' in loc: banks = ["Commonwealth Bank","Westpac","ANZ"]
+        else: banks = ["Chase Bank","HDFC Bank","HSBC"]
+        updates['bank_name'] = banks[user_id % len(banks)]
+        updated = True
+    if not bank_account_no:
+        updates['bank_account_no'] = f"xxxx{1000 + user_id}"
         updated = True
 
     if updated:
-        conn = database.get_db()
-        c = conn.cursor()
-        c.execute('''
-            UPDATE users 
-            SET custom_user_id = ?, phone_number = ?, email = ?, broker_name = ?, location = ?
-            WHERE id = ?
-        ''', (new_custom_user_id, new_phone_number, new_email, new_broker_name, new_location, user_id))
-        conn.commit()
-        conn.close()
-        
+        try:
+            sb = database.get_supabase()
+            sb.table('users').update(updates).eq('id', user_id).execute()
+        except Exception:
+            pass
+
     return {
-        "custom_user_id": new_custom_user_id,
-        "phone_number": new_phone_number,
-        "email": new_email,
-        "broker_name": new_broker_name,
-        "location": new_location
+        'custom_user_id': updates.get('custom_user_id', custom_user_id),
+        'phone_number': updates.get('phone_number', phone_number),
+        'email': updates.get('email', email),
+        'broker_name': updates.get('broker_name', broker_name),
+        'location': updates.get('location', location),
+        'bank_name': updates.get('bank_name', bank_name),
+        'bank_account_no': updates.get('bank_account_no', bank_account_no),
     }
 
-def seed_trades_for_user(c, user_id):
-    symbols = ["AAPL", "TSLA", "BTC/USD", "ETH/USD", "AMZN", "MSFT"]
-    num_trades = random.randint(5, 15)
-    for _ in range(num_trades):
+
+def seed_trades_for_user(user_id):
+    sb = database.get_supabase()
+    symbols = ["AAPL","TSLA","BTC/USD","ETH/USD","AMZN","MSFT"]
+    rows = []
+    for _ in range(random.randint(5, 15)):
         symbol = random.choice(symbols)
-        trade_type = random.choice(["BUY", "SELL"])
+        trade_type = random.choice(["BUY","SELL"])
         quantity = round(random.uniform(1.0, 100.0), 2)
-        
-        # Random date within the last 60 days
         days_ago = random.randint(1, 60)
         entry_date = (datetime.now() - timedelta(days=days_ago)).strftime('%Y-%m-%d %H:%M:%S')
-        
         entry_price = round(random.uniform(50.0, 500.0), 2)
-        
-        # 80% chance the trade is closed
         if random.random() < 0.8:
             status = "CLOSED"
-            exit_date = (datetime.now() - timedelta(days=max(0, days_ago - random.randint(1, 10)))).strftime('%Y-%m-%d %H:%M:%S')
-            
-            # Randomize profit/loss
-            price_change_pct = random.uniform(-0.15, 0.25) # Slightly biased to profit
-            if trade_type == "BUY":
-                exit_price = round(entry_price * (1 + price_change_pct), 2)
-                pnl = round((exit_price - entry_price) * quantity, 2)
-            else:
-                exit_price = round(entry_price * (1 - price_change_pct), 2)
-                pnl = round((entry_price - exit_price) * quantity, 2)
+            exit_date = (datetime.now() - timedelta(days=max(0, days_ago - random.randint(1,10)))).strftime('%Y-%m-%d %H:%M:%S')
+            pct = random.uniform(-0.15, 0.25)
+            exit_price = round(entry_price * (1 + pct if trade_type == 'BUY' else 1 - pct), 2)
+            pnl = round((exit_price - entry_price) * quantity if trade_type == 'BUY' else (entry_price - exit_price) * quantity, 2)
         else:
-            status = "OPEN"
-            exit_date = None
-            exit_price = None
-            pnl = 0.0
+            status = "OPEN"; exit_date = None; exit_price = None; pnl = 0.0
+        rows.append({'user_id': user_id, 'symbol': symbol, 'trade_type': trade_type,
+                     'entry_price': entry_price, 'exit_price': exit_price, 'quantity': quantity,
+                     'entry_date': entry_date, 'exit_date': exit_date, 'status': status, 'pnl': pnl})
+    sb.table('trades').insert(rows).execute()
 
-        c.execute('''
-            INSERT INTO trades (user_id, symbol, trade_type, entry_price, exit_price, quantity, entry_date, exit_date, status, pnl)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (user_id, symbol, trade_type, entry_price, exit_price, quantity, entry_date, exit_date, status, pnl))
 
 def calculate_risk_analysis(trades):
     if not trades:
@@ -311,8 +352,8 @@ def detect_frauds(trades, balance):
         "total_flags": len(flags)
     }
 
-# Initialize database
-database.init_db()
+# Supabase: tables are created via SQL in the dashboard
+# database.init_db() is a no-op
 
 def generate_smart_insights(trades):
     if not trades:
@@ -402,267 +443,202 @@ def generate_smart_insights(trades):
 
 @app.route('/')
 def index():
+    return app.send_static_file('hero.html')
+
+@app.route('/login')
+def login_page():
+    return app.send_static_file('index.html')
+
+@app.route('/dashboard')
+def dashboard_page():
     return app.send_static_file('index.html')
 
 @app.route('/api/auth/register', methods=['POST'])
 def register():
     data = request.json
-    username = data.get('username')
-    password = data.get('password')
-    phone_number = data.get('phone_number')
-    email = data.get('email')
-    broker_name = data.get('broker_name')
-    balance = data.get('balance')
-    
-    if balance is not None:
-        try:
-            balance = float(balance)
-        except ValueError:
-            balance = 10000.0
-    else:
-        balance = 10000.0
+    username = data.get('username', '').strip()
+    password = data.get('password', '')
+    phone_number = data.get('phone_number', '')
+    email = data.get('email', '')
+    broker_name = data.get('broker_name', '')
+    balance = float(data.get('balance') or 10000.0)
 
+    if phone_number:
+        is_valid, err_msg = validate_phone_number(phone_number)
+        if not is_valid:
+            return jsonify({'error': err_msg}), 400
     if not username or not password:
-        return jsonify({"error": "Missing username or password"}), 400
-    
-    conn = database.get_db()
-    c = conn.cursor()
+        return jsonify({'error': 'Missing username or password'}), 400
+
+    sb = database.get_supabase()
+    # Check duplicate
+    existing = sb.table('users').select('id').eq('username', username).execute()
+    if existing.data:
+        return jsonify({'error': 'Username already exists'}), 409
     try:
-        c.execute("INSERT INTO users (username, password_hash, phone_number, email, broker_name, balance) VALUES (?, ?, ?, ?, ?, ?)", 
-                  (username, database.hash_password(password), phone_number, email, broker_name, balance))
-        user_id = c.lastrowid
-        seed_trades_for_user(c, user_id)
-        conn.commit()
-        return jsonify({"message": "User created successfully"}), 201
-    except sqlite3.IntegrityError:
-        return jsonify({"error": "Username already exists"}), 409
-    finally:
-        conn.close()
+        res = sb.table('users').insert({
+            'username': username,
+            'password_hash': database.hash_password(password),
+            'phone_number': phone_number or None,
+            'email': email or None,
+            'broker_name': broker_name or None,
+            'balance': balance
+        }).execute()
+        new_user = res.data[0]
+        seed_trades_for_user(new_user['id'])
+        return jsonify({'message': 'User created successfully'}), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/auth/login', methods=['POST'])
 def login():
     data = request.json
-    username = data.get('username')
-    password = data.get('password')
-    
-    conn = database.get_db()
-    c = conn.cursor()
-    c.execute("SELECT id FROM users WHERE username = ? AND password_hash = ?", 
-              (username, database.hash_password(password)))
-    user = c.fetchone()
-    conn.close()
-    
-    if user:
-        session['user_id'] = user['id']
+    username = data.get('username', '').strip()
+    password = data.get('password', '')
+    sb = database.get_supabase()
+    res = sb.table('users').select('id,username').eq('username', username).eq('password_hash', database.hash_password(password)).execute()
+    if res.data:
+        session['user_id'] = res.data[0]['id']
         session['username'] = username
-        return jsonify({"message": "Logged in successfully", "username": username}), 200
-    return jsonify({"error": "Invalid credentials"}), 401
+        return jsonify({'message': 'Logged in successfully', 'username': username}), 200
+    return jsonify({'error': 'Invalid credentials'}), 401
 
 @app.route('/api/auth/logout', methods=['POST'])
 def logout():
     session.pop('user_id', None)
     session.pop('username', None)
-    return jsonify({"message": "Logged out"}), 200
+    return jsonify({'message': 'Logged out'}), 200
 
 @app.route('/api/auth/me', methods=['GET'])
 def me():
-    if 'user_id' in session:
-        conn = database.get_db()
-        c = conn.cursor()
-        c.execute("SELECT id, username, phone_number, email, created_at, balance, broker_name, custom_user_id, location FROM users WHERE id = ?", (session['user_id'],))
-        user = c.fetchone()
-        conn.close()
-        if user:
-            user_data = dict(user)
-            populated = ensure_user_profile_populated(
-                user_data['id'], user_data['username'], 
-                user_data['custom_user_id'], user_data['phone_number'], 
-                user_data['email'], user_data['broker_name'], user_data['location']
-            )
-            user_data.update(populated)
-            return jsonify(user_data), 200
-    return jsonify({"error": "Not authenticated"}), 401
+    if 'user_id' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+    sb = database.get_supabase()
+    res = sb.table('users').select('id,username,phone_number,email,created_at,balance,broker_name,custom_user_id,location,bank_name,bank_account_no').eq('id', session['user_id']).execute()
+    if not res.data:
+        return jsonify({'error': 'Not authenticated'}), 401
+    user_data = res.data[0]
+    populated = ensure_user_profile_populated(
+        user_data['id'], user_data['username'],
+        user_data.get('custom_user_id'), user_data.get('phone_number'),
+        user_data.get('email'), user_data.get('broker_name'),
+        user_data.get('location'), user_data.get('bank_name'), user_data.get('bank_account_no')
+    )
+    user_data.update(populated)
+    return jsonify(user_data), 200
 
 @app.route('/api/auth/profile', methods=['PUT'])
 def update_profile():
     if 'user_id' not in session:
-        return jsonify({"error": "Unauthorized"}), 401
-    
+        return jsonify({'error': 'Unauthorized'}), 401
     data = request.json
-    custom_user_id = data.get('custom_user_id')
     phone_number = data.get('phone_number')
-    email = data.get('email')
-    broker_name = data.get('broker_name')
-    created_at = data.get('created_at')
-    location = data.get('location')
+    if phone_number:
+        is_valid, err_msg = validate_phone_number(phone_number)
+        if not is_valid:
+            return jsonify({'error': err_msg}), 400
     balance = data.get('balance')
-    
-    if balance is not None:
-        try:
-            balance = float(balance)
-        except ValueError:
-            balance = 10000.0
-    else:
-        balance = 10000.0
-    
-    conn = database.get_db()
-    c = conn.cursor()
     try:
-        c.execute('''
-            UPDATE users 
-            SET custom_user_id = ?, phone_number = ?, email = ?, broker_name = ?, created_at = ?, location = ?, balance = ?
-            WHERE id = ?
-        ''', (custom_user_id, phone_number, email, broker_name, created_at, location, balance, session['user_id']))
-        conn.commit()
-        return jsonify({"message": "Profile updated successfully"}), 200
+        balance = float(balance) if balance is not None else 10000.0
+    except (ValueError, TypeError):
+        balance = 10000.0
+    sb = database.get_supabase()
+    try:
+        sb.table('users').update({
+            'custom_user_id': data.get('custom_user_id'),
+            'phone_number': phone_number,
+            'email': data.get('email'),
+            'broker_name': data.get('broker_name'),
+            'location': data.get('location'),
+            'balance': balance,
+            'bank_name': data.get('bank_name'),
+            'bank_account_no': data.get('bank_account_no'),
+        }).eq('id', session['user_id']).execute()
+        return jsonify({'message': 'Profile updated successfully'}), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    finally:
-        conn.close()
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/trades', methods=['GET', 'POST'])
 def trades():
     if 'user_id' not in session:
-        return jsonify({"error": "Unauthorized"}), 401
-    
+        return jsonify({'error': 'Unauthorized'}), 401
     user_id = session['user_id']
-    conn = database.get_db()
-    c = conn.cursor()
-
+    sb = database.get_supabase()
     if request.method == 'GET':
-        c.execute("SELECT * FROM trades WHERE user_id = ? ORDER BY entry_date DESC", (user_id,))
-        trades = [dict(row) for row in c.fetchall()]
-        conn.close()
-        return jsonify(trades), 200
-        
-    elif request.method == 'POST':
-        data = request.json
-        symbol = data.get('symbol', '').upper()
-        trade_type = data.get('trade_type')
-        entry_price = float(data.get('entry_price', 0))
-        exit_price = data.get('exit_price')
-        if exit_price:
-             exit_price = float(exit_price)
-        else:
-             exit_price = None
-             
-        quantity = float(data.get('quantity', 0))
-        entry_date = data.get('entry_date')
-        exit_date = data.get('exit_date')
-        status = data.get('status', 'OPEN')
-        
-        pnl = 0
-        if status == 'CLOSED' and exit_price is not None:
-            if trade_type == 'BUY':
-                pnl = (exit_price - entry_price) * quantity
-            else:
-                pnl = (entry_price - exit_price) * quantity
-
-        c.execute('''
-            INSERT INTO trades (user_id, symbol, trade_type, entry_price, exit_price, quantity, entry_date, exit_date, status, pnl)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (user_id, symbol, trade_type, entry_price, exit_price, quantity, entry_date, exit_date, status, pnl))
-        conn.commit()
-        conn.close()
-        return jsonify({"message": "Trade added successfully"}), 201
+        res = sb.table('trades').select('*').eq('user_id', user_id).order('entry_date', desc=True).execute()
+        return jsonify(res.data), 200
+    data = request.json
+    symbol = data.get('symbol', '').upper()
+    trade_type = data.get('trade_type')
+    entry_price = float(data.get('entry_price', 0))
+    exit_price = data.get('exit_price')
+    exit_price = float(exit_price) if exit_price else None
+    quantity = float(data.get('quantity', 0))
+    status = data.get('status', 'OPEN')
+    pnl = 0
+    if status == 'CLOSED' and exit_price is not None:
+        pnl = (exit_price - entry_price) * quantity if trade_type == 'BUY' else (entry_price - exit_price) * quantity
+    sb.table('trades').insert({
+        'user_id': user_id, 'symbol': symbol, 'trade_type': trade_type,
+        'entry_price': entry_price, 'exit_price': exit_price, 'quantity': quantity,
+        'entry_date': data.get('entry_date'), 'exit_date': data.get('exit_date'),
+        'status': status, 'pnl': round(pnl, 2)
+    }).execute()
+    return jsonify({'message': 'Trade added successfully'}), 201
 
 @app.route('/api/trades/<int:trade_id>', methods=['PUT', 'DELETE'])
 def trade_item(trade_id):
-     if 'user_id' not in session:
-        return jsonify({"error": "Unauthorized"}), 401
-     
-     conn = database.get_db()
-     c = conn.cursor()
-     
-     # Verify ownership
-     c.execute("SELECT id FROM trades WHERE id = ? AND user_id = ?", (trade_id, session['user_id']))
-     trade = c.fetchone()
-     if not trade:
-         conn.close()
-         return jsonify({"error": "Trade not found or unauthorized"}), 404
-
-     if request.method == 'DELETE':
-         c.execute("DELETE FROM trades WHERE id = ? AND user_id = ?", (trade_id, session['user_id']))
-         conn.commit()
-         conn.close()
-         return jsonify({"message": "Trade deleted"}), 200
-         
-     elif request.method == 'PUT':
-         data = request.json
-         symbol = data.get('symbol', '').upper()
-         trade_type = data.get('trade_type')
-         entry_price = float(data.get('entry_price', 0))
-         exit_price = data.get('exit_price')
-         if exit_price is not None and exit_price != '':
-             exit_price = float(exit_price)
-         else:
-             exit_price = None
-             
-         quantity = float(data.get('quantity', 0))
-         entry_date = data.get('entry_date')
-         exit_date = data.get('exit_date')
-         status = data.get('status', 'OPEN')
-         
-         pnl = 0
-         if status == 'CLOSED' and exit_price is not None:
-             if trade_type == 'BUY':
-                 pnl = (exit_price - entry_price) * quantity
-             else:
-                 pnl = (entry_price - exit_price) * quantity
-
-         c.execute('''
-             UPDATE trades 
-             SET symbol = ?, trade_type = ?, entry_price = ?, exit_price = ?, quantity = ?, entry_date = ?, exit_date = ?, status = ?, pnl = ?
-             WHERE id = ? AND user_id = ?
-         ''', (symbol, trade_type, entry_price, exit_price, quantity, entry_date, exit_date, status, pnl, trade_id, session['user_id']))
-         conn.commit()
-         conn.close()
-         return jsonify({"message": "Trade updated successfully"}), 200
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    sb = database.get_supabase()
+    check = sb.table('trades').select('id').eq('id', trade_id).eq('user_id', session['user_id']).execute()
+    if not check.data:
+        return jsonify({'error': 'Trade not found or unauthorized'}), 404
+    if request.method == 'DELETE':
+        sb.table('trades').delete().eq('id', trade_id).execute()
+        return jsonify({'message': 'Trade deleted'}), 200
+    data = request.json
+    entry_price = float(data.get('entry_price', 0))
+    exit_price = data.get('exit_price')
+    exit_price = float(exit_price) if exit_price not in (None, '') else None
+    quantity = float(data.get('quantity', 0))
+    trade_type = data.get('trade_type')
+    status = data.get('status', 'OPEN')
+    pnl = 0
+    if status == 'CLOSED' and exit_price is not None:
+        pnl = (exit_price - entry_price) * quantity if trade_type == 'BUY' else (entry_price - exit_price) * quantity
+    sb.table('trades').update({
+        'symbol': data.get('symbol', '').upper(), 'trade_type': trade_type,
+        'entry_price': entry_price, 'exit_price': exit_price, 'quantity': quantity,
+        'entry_date': data.get('entry_date'), 'exit_date': data.get('exit_date'),
+        'status': status, 'pnl': round(pnl, 2)
+    }).eq('id', trade_id).execute()
+    return jsonify({'message': 'Trade updated successfully'}), 200
 
 @app.route('/api/analytics', methods=['GET'])
 def analytics():
     if 'user_id' not in session:
-        return jsonify({"error": "Unauthorized"}), 401
-        
-    user_id = session['user_id']
-    conn = database.get_db()
-    c = conn.cursor()
-    c.execute("SELECT * FROM trades WHERE user_id = ?", (user_id,))
-    trades = [dict(row) for row in c.fetchall()]
-    c.execute("SELECT balance FROM users WHERE id = ?", (user_id,))
-    user_row = c.fetchone()
-    balance = user_row['balance'] if user_row else 10000.0
-    conn.close()
-    
-    closed_trades = [t for t in trades if t['status'] == 'CLOSED']
-    total_pnl = sum((t['pnl'] or 0) for t in closed_trades)
-    win_trades = sum(1 for t in closed_trades if (t['pnl'] or 0) > 0)
-    total_closed = len(closed_trades)
+        return jsonify({'error': 'Unauthorized'}), 401
+    sb = database.get_supabase()
+    trades_res = sb.table('trades').select('*').eq('user_id', session['user_id']).execute()
+    trades = trades_res.data
+    user_res = sb.table('users').select('balance').eq('id', session['user_id']).execute()
+    balance = user_res.data[0]['balance'] if user_res.data else 10000.0
+    closed = [t for t in trades if t['status'] == 'CLOSED']
+    total_pnl = sum((t['pnl'] or 0) for t in closed)
+    win_trades = sum(1 for t in closed if (t['pnl'] or 0) > 0)
+    total_closed = len(closed)
     win_rate = (win_trades / total_closed * 100) if total_closed > 0 else 0
-    
-    # AI insights
-    insights = generate_smart_insights(trades)
-    
-    # Growth data (Mocked cumulative PnL over time for chart)
-    # Simple sort by exit_date
-    trades_with_exit = [t for t in closed_trades if t['exit_date']]
-    trades_with_exit.sort(key=lambda x: x['exit_date'])
-    
-    growth_data = []
-    current_pnl = 0
+    trades_with_exit = sorted([t for t in closed if t['exit_date']], key=lambda x: x['exit_date'])
+    growth_data, cur = [], 0
     for t in trades_with_exit:
-        current_pnl += (t['pnl'] or 0)
-        growth_data.append({"date": t['exit_date'].split('T')[0], "pnl": current_pnl})
-
+        cur += (t['pnl'] or 0)
+        growth_data.append({'date': (t['exit_date'] or '')[:10], 'pnl': cur})
     return jsonify({
-        "total_pnl": total_pnl,
-        "win_rate": win_rate,
-        "total_closed": total_closed,
-        "insights": insights[:3],
-        "growth_data": growth_data,
-        "risk": calculate_risk_analysis(trades),
-        "fraud": detect_frauds(trades, balance),
-        "buy_sell_stats": calculate_buy_sell_stats(trades)
+        'total_pnl': total_pnl, 'win_rate': win_rate, 'total_closed': total_closed,
+        'insights': generate_smart_insights(trades)[:3], 'growth_data': growth_data,
+        'risk': calculate_risk_analysis(trades), 'fraud': detect_frauds(trades, balance),
+        'buy_sell_stats': calculate_buy_sell_stats(trades)
     }), 200
 
 @app.route('/api/autocomplete_trader', methods=['GET'])
@@ -670,18 +646,9 @@ def autocomplete_trader():
     username = request.args.get('username', '').strip()
     if not username:
         return jsonify([]), 200
-
-    conn = database.get_db()
-    c = conn.cursor()
-    c.execute('''
-        SELECT username, phone_number, email, custom_user_id 
-        FROM users 
-        WHERE username LIKE ? COLLATE NOCASE 
-        LIMIT 5
-    ''', (f"%{username}%",))
-    results = [dict(row) for row in c.fetchall()]
-    conn.close()
-    return jsonify(results), 200
+    sb = database.get_supabase()
+    res = sb.table('users').select('username,phone_number,email,custom_user_id').ilike('username', f'%{username}%').limit(5).execute()
+    return jsonify(res.data), 200
 
 @app.route('/api/search_trader', methods=['POST'])
 def search_trader():
@@ -694,34 +661,25 @@ def search_trader():
     if not any([username, trader_id, phone, email]):
         return jsonify({"error": "At least one search field must be filled"}), 400
 
-    conn = database.get_db()
-    c = conn.cursor()
+    sb = database.get_supabase()
     
-    query_parts = []
-    params = []
+    or_conds = []
     if username:
-        query_parts.append("username = ? COLLATE NOCASE")
-        params.append(username)
+        or_conds.append(f"username.ilike.%{username}%")
     if trader_id:
-        query_parts.append("custom_user_id = ? COLLATE NOCASE")
-        params.append(trader_id)
+        or_conds.append(f"custom_user_id.ilike.%{trader_id}%")
     if phone:
-        query_parts.append("phone_number = ?")
-        params.append(phone)
+        or_conds.append(f"phone_number.eq.{phone}")
     if email:
-        query_parts.append("email = ? COLLATE NOCASE")
-        params.append(email)
+        or_conds.append(f"email.ilike.%{email}%")
         
-    where_clause = " OR ".join(query_parts)
+    query = sb.table('users').select('id, username, phone_number, email, created_at, balance, broker_name, custom_user_id, location, bank_name, bank_account_no')
+    if or_conds:
+        query = query.or_(','.join(or_conds))
+        
+    res = query.execute()
     
-    c.execute(f'''
-        SELECT id, username, phone_number, email, created_at, balance, broker_name, custom_user_id, location 
-        FROM users 
-        WHERE {where_clause}
-    ''', tuple(params))
-    
-    user = c.fetchone()
-    if not user:
+    if not res.data:
         # Create user on-the-fly if they don't exist
         new_username = username if username else (f"trader_{trader_id}" if trader_id else f"user_{random.randint(1000, 9999)}")
         new_trader_id = trader_id if trader_id else f"TL-{random.randint(1000, 9999)}"
@@ -729,40 +687,42 @@ def search_trader():
         new_phone = phone if phone else None
         
         try:
-            c.execute('''
-                INSERT INTO users (username, password_hash, custom_user_id, phone_number, email)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (new_username, database.hash_password("password123"), new_trader_id, new_phone, new_email))
-            new_uid = c.lastrowid
-            seed_trades_for_user(c, new_uid)
-            conn.commit()
+            insert_res = sb.table('users').insert({
+                'username': new_username,
+                'password_hash': database.hash_password("password123"),
+                'custom_user_id': new_trader_id,
+                'phone_number': new_phone,
+                'email': new_email
+            }).execute()
             
-            c.execute("SELECT id, username, phone_number, email, created_at, balance, broker_name, custom_user_id, location FROM users WHERE id = ?", (new_uid,))
-            user = c.fetchone()
-        except database.sqlite3.IntegrityError:
-            c.execute("SELECT id, username, phone_number, email, created_at, balance, broker_name, custom_user_id, location FROM users WHERE username = ? COLLATE NOCASE OR custom_user_id = ? COLLATE NOCASE", (new_username, new_trader_id))
-            user = c.fetchone()
+            user_data = insert_res.data[0]
+            new_uid = user_data['id']
+            seed_trades_for_user(new_uid)
             
-        if not user:
-            conn.close()
-            return jsonify({"error": "Trader not found"}), 404
+        except Exception:
+            fallback_res = sb.table('users').select('id, username, phone_number, email, created_at, balance, broker_name, custom_user_id, location, bank_name, bank_account_no').or_(f"username.eq.{new_username},custom_user_id.eq.{new_trader_id}").execute()
+            if fallback_res.data:
+                user_data = fallback_res.data[0]
+            else:
+                return jsonify({"error": "Trader not found"}), 404
+    else:
+        user_data = res.data[0]
         
-    user_data = dict(user)
     user_id = user_data['id']
     session['user_id'] = user_id
     
     # Ensure Broker, Phone, and Email are never empty
     populated = ensure_user_profile_populated(
         user_data['id'], user_data['username'], 
-        user_data['custom_user_id'], user_data['phone_number'], 
-        user_data['email'], user_data['broker_name'], user_data['location']
+        user_data.get('custom_user_id'), user_data.get('phone_number'), 
+        user_data.get('email'), user_data.get('broker_name'), user_data.get('location'),
+        user_data.get('bank_name'), user_data.get('bank_account_no')
     )
     user_data.update(populated)
     
     # Fetch trades
-    c.execute("SELECT * FROM trades WHERE user_id = ? ORDER BY entry_date DESC", (user_id,))
-    trades = [dict(row) for row in c.fetchall()]
-    conn.close()
+    trades_res = sb.table('trades').select('*').eq('user_id', user_id).order('entry_date', desc=True).execute()
+    trades = trades_res.data
     
     # Compute analytics
     total_pnl = sum((t['pnl'] or 0) for t in trades if t['status'] == 'CLOSED')
@@ -821,6 +781,7 @@ def chat():
 
     if not user:
         return jsonify({"reply": "Trader profile not found."}), 404
+    user = dict(user)
 
     closed_trades = [t for t in trades if t['status'] == 'CLOSED']
     total_pnl = sum((t['pnl'] or 0) for t in closed_trades)
@@ -852,6 +813,29 @@ def chat():
         reply = f"Your account balance is **${current_balance:,.2f}** (Initial funding: ${user['balance'] or 10000.0:,.2f}, Total PnL: ${total_pnl:+,.2f})."
     elif "profit" in msg or "pnl" in msg or "loss" in msg or "how much" in msg:
         reply = f"Your total cumulative PnL is **${total_pnl:+,.2f}**. You have logged {total_closed} closed trades and {len(trades) - total_closed} open positions."
+    elif any(x in msg for x in ["support", "helpline", "contact", "phone support", "customer care"]):
+        loc = (user.get('location') or "").lower()
+        if "india" in loc or "mumbai" in loc:
+            reply = "Our Indian support helpline is **+91 1800 266 0199** (Toll-Free, 24/7)."
+        elif "usa" in loc or "new york" in loc or "united states" in loc:
+            reply = "Our US support helpline is **+1 800 555 0199** (Toll-Free, 24/7)."
+        elif "uk" in loc or "london" in loc or "united kingdom" in loc:
+            reply = "Our UK support helpline is **+44 808 196 0199** (Toll-Free, 24/7)."
+        elif "germany" in loc or "berlin" in loc:
+            reply = "Our German support helpline is **+49 800 180 0199** (Toll-Free, 24/7)."
+        elif "japan" in loc or "tokyo" in loc:
+            reply = "Our Japanese support helpline is **+81 120 939 199** (Toll-Free, 24/7)."
+        elif "australia" in loc or "sydney" in loc:
+            reply = "Our Australian support helpline is **+61 1800 861 199** (Toll-Free, 24/7)."
+        elif "china" in loc or "shanghai" in loc:
+            reply = "Our Chinese support helpline is **+86 400 820 0199** (Toll-Free, 24/7)."
+        else:
+            reply = "Our Global support helpline is **+1 800 555 0199** (Toll-Free, 24/7)."
+    elif "bank" in msg:
+        if user.get('bank_name') and user.get('bank_account_no'):
+            reply = f"Your linked bank account is **{user['bank_name']}** (Account Number: **{user['bank_account_no']}**)."
+        else:
+            reply = "You do not have a bank account linked to TradeLens yet. You can link one in your Edit Profile modal!"
     elif "best symbol" in msg or "best asset" in msg or "profitable asset" in msg:
         if closed_trades:
             symbol_stats = {}
