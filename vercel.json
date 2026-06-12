@@ -8,8 +8,15 @@
   ],
   "routes": [
     {
+      "src": "/static/(.*)",
+      "dest": "/app.py"
+    },
+    {
       "src": "/(.*)",
-      "dest": "app.py"
+      "dest": "/app.py"
     }
-  ]
+  ],
+  "env": {
+    "PYTHONPATH": "."
+  }
 }
