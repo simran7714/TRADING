@@ -146,6 +146,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const authError = document.getElementById('auth-error');
     const toggleAuthLink = document.getElementById('toggle-auth');
     const authSubmitBtn = document.getElementById('auth-submit-btn');
+    // Ensure auth-error is always visible when content is set
+    if (authError) authError.style.display = 'block';
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
     const logoutBtn = document.getElementById('logout-btn');
@@ -194,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isLoginMode = true;
 
     // --- Authentication ---
-    toggleAuthLink.addEventListener('click', (e) => {
+    if (toggleAuthLink) toggleAuthLink.addEventListener('click', (e) => {
         e.preventDefault();
         isLoginMode = !isLoginMode;
         if (isLoginMode) {
@@ -216,12 +218,13 @@ document.addEventListener('DOMContentLoaded', () => {
             detectAndSelectRegisterCountry();
         }
         // Re-attach event listener
-        document.getElementById('toggle-auth').addEventListener('click', arguments.callee);
+        const newToggle = document.getElementById('toggle-auth');
+        if (newToggle) newToggle.addEventListener('click', arguments.callee);
     });
 
-    authForm.addEventListener('submit', async (e) => {
+    if (authForm) authForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        authError.textContent = '';
+        if (authError) { authError.textContent = ''; authError.style.display = 'none'; }
         const username = usernameInput.value;
         const password = passwordInput.value;
         
@@ -261,21 +264,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!isLoginMode) {
                     // Registration success, switch to login
                     isLoginMode = true;
-                    authSubmitBtn.textContent = 'Login';
-                    document.getElementById('auth-toggle-text').innerHTML = `Don't have an account? <a href="#" id="toggle-auth">Register</a>`;
-                    authError.textContent = 'Registration successful. Please log in.';
-                    authError.style.color = 'var(--success)';
+                    if (authSubmitBtn) authSubmitBtn.textContent = 'Sign In';
+                    if (authError) {
+                        authError.textContent = 'Registration successful. Please sign in.';
+                        authError.style.color = 'var(--success)';
+                        authError.className = 'auth-msg-box success';
+                        authError.style.display = 'block';
+                    }
+                    if (typeof switchAuthTab === 'function') switchAuthTab('login');
                 } else {
                     // Login success
                     checkSession();
                 }
             } else {
-                authError.textContent = data.error || 'Authentication failed';
-                authError.style.color = 'var(--danger)';
+                if (authError) {
+                    authError.textContent = data.error || 'Authentication failed';
+                    authError.className = 'auth-msg-box error';
+                    authError.style.display = 'block';
+                }
             }
         } catch (err) {
-            authError.textContent = 'Network error. Please try again.';
-            authError.style.color = 'var(--danger)';
+            if (authError) {
+                authError.textContent = 'Network error. Please try again.';
+                authError.className = 'auth-msg-box error';
+                authError.style.display = 'block';
+            }
         }
     });
 

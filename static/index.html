@@ -21,84 +21,281 @@
             <span class="theme-icon">🌙</span>
         </button>
 
-        <!-- Auth View -->
+        <!-- Auth View — Full-Screen Split Panel -->
         <div id="auth-view" class="view active">
-            <div class="auth-container">
-                <div class="auth-box">
-                    <div class="auth-header">
-                        <h1>TradeLens</h1>
-                        <p>Analyze your trading edge.</p>
-                    </div>
-                    
-                    <!-- AI Smart Search Section -->
-                    <div class="ai-search-container" style="padding: 1.2rem;">
-                        <div class="ai-search-header" style="margin-bottom: 0.8rem;">
-                            <span class="ai-icon">✨</span>
-                            <h3>AI Smart Search</h3>
+            <!-- Particle Canvas Background -->
+            <canvas id="auth-particles-canvas" class="auth-particles-canvas"></canvas>
+
+            <!-- LEFT PANEL — Branding -->
+            <div class="auth-left-panel">
+                <div class="auth-left-content">
+                    <div class="auth-brand">
+                        <div class="auth-brand-logo">
+                            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                                <rect width="48" height="48" rx="14" fill="url(#logoGrad)"/>
+                                <path d="M10 34 L20 20 L28 28 L36 14" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="36" cy="14" r="3" fill="white"/>
+                                <defs>
+                                    <linearGradient id="logoGrad" x1="0" y1="0" x2="48" y2="48">
+                                        <stop offset="0%" stop-color="#6366f1"/>
+                                        <stop offset="100%" stop-color="#a855f7"/>
+                                    </linearGradient>
+                                </defs>
+                            </svg>
                         </div>
-                        <form id="ai-search-form">
-                            <div class="input-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
-                                <div class="input-group" style="margin-bottom: 0;">
-                                    <label for="ai-search-username" style="font-size: 0.75rem;">Username</label>
-                                    <input type="text" id="ai-search-username" list="search-username-options" placeholder="e.g. alice" style="padding: 0.5rem;">
+                        <h1 class="auth-brand-name">TradeLens</h1>
+                    </div>
+                    <p class="auth-brand-tagline">Your AI-powered trading intelligence platform</p>
+
+                    <div class="auth-features">
+                        <div class="auth-feature-item">
+                            <div class="auth-feature-icon">📊</div>
+                            <div class="auth-feature-text">
+                                <strong>Real-Time Analytics</strong>
+                                <span>Track PnL, win rate & risk score</span>
+                            </div>
+                        </div>
+                        <div class="auth-feature-item">
+                            <div class="auth-feature-icon">🤖</div>
+                            <div class="auth-feature-text">
+                                <strong>AI Smart Insights</strong>
+                                <span>Personalized strategy recommendations</span>
+                            </div>
+                        </div>
+                        <div class="auth-feature-item">
+                            <div class="auth-feature-icon">🛡️</div>
+                            <div class="auth-feature-text">
+                                <strong>Fraud Detection</strong>
+                                <span>Advanced anomaly monitoring engine</span>
+                            </div>
+                        </div>
+                        <div class="auth-feature-item">
+                            <div class="auth-feature-icon">🏦</div>
+                            <div class="auth-feature-text">
+                                <strong>Portfolio Management</strong>
+                                <span>Multi-asset trade journaling</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="auth-stat-row">
+                        <div class="auth-stat">
+                            <span class="auth-stat-num">10K+</span>
+                            <span class="auth-stat-label">Traders</span>
+                        </div>
+                        <div class="auth-stat-divider"></div>
+                        <div class="auth-stat">
+                            <span class="auth-stat-num">$2.4B</span>
+                            <span class="auth-stat-label">Volume Tracked</span>
+                        </div>
+                        <div class="auth-stat-divider"></div>
+                        <div class="auth-stat">
+                            <span class="auth-stat-num">99.9%</span>
+                            <span class="auth-stat-label">Uptime</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL — Auth Forms -->
+            <div class="auth-right-panel">
+                <div class="auth-right-inner">
+
+                    <!-- Tab Switcher -->
+                    <div class="auth-tab-bar" id="auth-tab-bar">
+                        <button class="auth-tab-btn active" id="tab-login-btn" onclick="switchAuthTab('login')">Sign In</button>
+                        <button class="auth-tab-btn" id="tab-register-btn" onclick="switchAuthTab('register')">Register</button>
+                        <button class="auth-tab-btn" id="tab-search-btn" onclick="switchAuthTab('search')">
+                            <span class="ai-tab-icon">✨</span> AI Search
+                        </button>
+                        <div class="auth-tab-indicator" id="auth-tab-indicator"></div>
+                    </div>
+
+                    <!-- LOGIN PANEL -->
+                    <div class="auth-panel active" id="panel-login">
+                        <div class="auth-panel-header">
+                            <h2>Welcome back</h2>
+                            <p>Sign in to your TradeLens account</p>
+                        </div>
+                        <form id="auth-form" class="auth-form-inner" autocomplete="on">
+                            <div class="auth-field-group">
+                                <label for="username" class="auth-label">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                                    Username
+                                </label>
+                                <div class="auth-input-wrapper">
+                                    <input type="text" id="username" class="auth-input" placeholder="Enter your username" autocomplete="username">
+                                </div>
+                            </div>
+                            <div class="auth-field-group">
+                                <label for="password" class="auth-label">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                    Password
+                                </label>
+                                <div class="auth-input-wrapper auth-password-wrapper">
+                                    <input type="password" id="password" class="auth-input" placeholder="Enter your password" autocomplete="current-password">
+                                    <button type="button" class="auth-eye-btn" id="login-eye-btn" onclick="togglePasswordVisibility('password', 'login-eye-btn')">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Hidden fields for register mode (kept for JS compatibility) -->
+                            <div id="phone-group" style="display:none;">
+                                <div class="auth-field-group">
+                                    <label for="phone" class="auth-label">Phone Number</label>
+                                    <div class="auth-input-wrapper phone-input-wrapper">
+                                        <select id="phone-country-code" class="auth-country-select">
+                                            <option value="+1">🇺🇸 +1</option>
+                                            <option value="+91">🇮🇳 +91</option>
+                                            <option value="+44">🇬🇧 +44</option>
+                                            <option value="+49">🇩🇪 +49</option>
+                                            <option value="+81">🇯🇵 +81</option>
+                                            <option value="+61">🇦🇺 +61</option>
+                                            <option value="+86">🇨🇳 +86</option>
+                                        </select>
+                                        <input type="tel" id="phone" class="auth-input" placeholder="Phone number (optional)">
+                                    </div>
+                                    <span id="phone-validation-msg" class="auth-validation-msg"></span>
+                                </div>
+                            </div>
+                            <div id="email-group" style="display:none;">
+                                <div class="auth-field-group">
+                                    <label for="email" class="auth-label">Email</label>
+                                    <input type="email" id="email" class="auth-input" placeholder="Email (optional)">
+                                </div>
+                            </div>
+                            <div id="broker-group" style="display:none;">
+                                <div class="auth-field-group">
+                                    <label for="broker" class="auth-label">Broker Name</label>
+                                    <input type="text" id="broker" class="auth-input" placeholder="e.g. Binance (optional)">
+                                </div>
+                            </div>
+                            <div id="balance-group" style="display:none;">
+                                <div class="auth-field-group">
+                                    <label for="balance" class="auth-label">Initial Balance</label>
+                                    <input type="number" id="balance" class="auth-input" step="any" placeholder="e.g. 10000.00">
+                                </div>
+                            </div>
+
+                            <button type="submit" id="auth-submit-btn" class="auth-submit-btn">
+                                <span class="auth-btn-text">Sign In</span>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                            </button>
+                        </form>
+                        <div id="auth-error" class="auth-msg-box" style="display:none;"></div>
+                        <div class="auth-switch-hint">
+                            Don't have an account?
+                            <a href="#" id="toggle-auth" onclick="switchAuthTab('register'); return false;">Create one</a>
+                        </div>
+                        <div id="auth-toggle-text" style="display:none;"></div>
+                    </div>
+
+                    <!-- REGISTER PANEL -->
+                    <div class="auth-panel" id="panel-register">
+                        <div class="auth-panel-header">
+                            <h2>Create account</h2>
+                            <p>Join TradeLens and start tracking</p>
+                        </div>
+                        <form id="register-form-ui" class="auth-form-inner" autocomplete="on" onsubmit="handleRegisterSubmit(event)">
+                            <div class="auth-form-grid">
+                                <div class="auth-field-group">
+                                    <label class="auth-label">Username</label>
+                                    <input type="text" id="reg-username" class="auth-input" placeholder="Choose a username" autocomplete="username" required>
+                                </div>
+                                <div class="auth-field-group">
+                                    <label class="auth-label">Broker (optional)</label>
+                                    <input type="text" id="reg-broker" class="auth-input" placeholder="e.g. Binance">
+                                </div>
+                            </div>
+                            <div class="auth-field-group">
+                                <label class="auth-label">Email (optional)</label>
+                                <input type="email" id="reg-email" class="auth-input" placeholder="your@email.com" autocomplete="email">
+                            </div>
+                            <div class="auth-field-group">
+                                <label class="auth-label">Phone (optional)</label>
+                                <div class="auth-input-wrapper phone-input-wrapper">
+                                    <select id="reg-phone-country" class="auth-country-select">
+                                        <option value="+1">🇺🇸 +1</option>
+                                        <option value="+91">🇮🇳 +91</option>
+                                        <option value="+44">🇬🇧 +44</option>
+                                        <option value="+49">🇩🇪 +49</option>
+                                        <option value="+81">🇯🇵 +81</option>
+                                        <option value="+61">🇦🇺 +61</option>
+                                        <option value="+86">🇨🇳 +86</option>
+                                    </select>
+                                    <input type="tel" id="reg-phone" class="auth-input" placeholder="Phone number">
+                                </div>
+                            </div>
+                            <div class="auth-form-grid">
+                                <div class="auth-field-group">
+                                    <label class="auth-label">Password</label>
+                                    <div class="auth-input-wrapper auth-password-wrapper">
+                                        <input type="password" id="reg-password" class="auth-input" placeholder="Create password" autocomplete="new-password" required>
+                                        <button type="button" class="auth-eye-btn" onclick="togglePasswordVisibility('reg-password', this)">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="auth-field-group">
+                                    <label class="auth-label">Initial Balance</label>
+                                    <input type="number" id="reg-balance" class="auth-input" placeholder="10000.00" step="any">
+                                </div>
+                            </div>
+                            <button type="submit" class="auth-submit-btn auth-register-btn">
+                                <span>Create Account</span>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                            </button>
+                        </form>
+                        <div id="register-msg" class="auth-msg-box" style="display:none;"></div>
+                        <div class="auth-switch-hint">
+                            Already have an account?
+                            <a href="#" onclick="switchAuthTab('login'); return false;">Sign in</a>
+                        </div>
+                    </div>
+
+                    <!-- AI SEARCH PANEL -->
+                    <div class="auth-panel" id="panel-search">
+                        <div class="auth-panel-header">
+                            <h2 class="auth-ai-title">
+                                <span class="ai-sparkle">✨</span> AI Trader Search
+                            </h2>
+                            <p>Find any trader by username, ID, phone or email</p>
+                        </div>
+                        <form id="ai-search-form" class="auth-form-inner">
+                            <div class="auth-form-grid">
+                                <div class="auth-field-group">
+                                    <label class="auth-label">Username</label>
+                                    <input type="text" id="ai-search-username" list="search-username-options" class="auth-input" placeholder="e.g. alice">
                                     <datalist id="search-username-options"></datalist>
                                 </div>
-                                <div class="input-group" style="margin-bottom: 0;">
-                                    <label for="ai-search-id" style="font-size: 0.75rem;">Trader ID</label>
-                                    <input type="text" id="ai-search-id" placeholder="e.g. TraderX" style="padding: 0.5rem;">
+                                <div class="auth-field-group">
+                                    <label class="auth-label">Trader ID</label>
+                                    <input type="text" id="ai-search-id" class="auth-input" placeholder="e.g. TL-0042">
                                 </div>
                             </div>
-                            <button type="submit" class="btn primary-btn w-100" style="padding: 0.5rem 1rem;">🔍 Search Trader</button>
-                        </form>
-                        <div id="ai-search-error" class="error-message"></div>
-                    </div>
-                    
-                    <div class="divider" style="display: none;">
-                        <span>OR LOGIN TO YOUR ACCOUNT</span>
-                    </div>
-                    <form id="auth-form" style="display: none;">
-                        <div class="input-group">
-                            <label for="username">Username</label>
-                            <input type="text" id="username" placeholder="Enter your username">
-                        </div>
-                        <div class="input-group" id="phone-group" style="display: none;">
-                            <label for="phone">Phone Number</label>
-                            <div class="phone-input-wrapper">
-                                <select id="phone-country-code">
-                                    <option value="+1">🇺🇸 +1</option>
-                                    <option value="+91">🇮🇳 +91</option>
-                                    <option value="+44">🇬🇧 +44</option>
-                                    <option value="+49">🇩🇪 +49</option>
-                                    <option value="+81">🇯🇵 +81</option>
-                                    <option value="+61">🇦🇺 +61</option>
-                                    <option value="+86">🇨🇳 +86</option>
-                                </select>
-                                <input type="tel" id="phone" placeholder="Enter your phone number (optional)">
+                            <div class="auth-form-grid">
+                                <div class="auth-field-group">
+                                    <label class="auth-label">Phone</label>
+                                    <input type="tel" id="ai-search-phone" class="auth-input" placeholder="+91 9876543210">
+                                </div>
+                                <div class="auth-field-group">
+                                    <label class="auth-label">Email</label>
+                                    <input type="email" id="ai-search-email" class="auth-input" placeholder="trader@email.com">
+                                </div>
                             </div>
-                            <span id="phone-validation-msg" class="validation-msg"></span>
+                            <button type="submit" class="auth-submit-btn auth-search-btn">
+                                <span>🔍 Search Trader</span>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                            </button>
+                        </form>
+                        <div id="ai-search-error" class="auth-msg-box" style="display:none;"></div>
+                        <div class="auth-ai-hint">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            Fill at least one field. New traders are auto-created.
                         </div>
-                        <div class="input-group" id="email-group" style="display: none;">
-                            <label for="email">Email</label>
-                            <input type="email" id="email" placeholder="Enter your email (optional)">
-                        </div>
-                        <div class="input-group" id="broker-group" style="display: none;">
-                            <label for="broker">Broker Name</label>
-                            <input type="text" id="broker" placeholder="e.g. Binance, TradeStation (optional)">
-                        </div>
-                        <div class="input-group" id="balance-group" style="display: none;">
-                            <label for="balance">Initial Balance (₹)</label>
-                            <input type="number" id="balance" step="any" placeholder="Enter starting balance (default: 10000.00)">
-                        </div>
-                        <div class="input-group">
-                            <label for="password">Password</label>
-                            <input type="password" id="password" placeholder="Enter your password">
-                        </div>
-                        <button type="submit" id="auth-submit-btn" class="btn primary-btn">Login</button>
-                    </form>
-                    <div class="auth-footer" style="display: none;">
-                        <p id="auth-toggle-text">Don't have an account? <a href="#" id="toggle-auth">Register</a></p>
                     </div>
-                    <div id="auth-error" class="error-message" style="display: none;"></div>
+
                 </div>
             </div>
         </div>
@@ -683,5 +880,141 @@
     </div>
 
     <script src="js/main.js"></script>
+    <script>
+        /* =====================================================
+           AUTH UI HELPERS — global scope (called via onclick)
+           ===================================================== */
+
+        function switchAuthTab(tab) {
+            // Update tab buttons
+            document.querySelectorAll('.auth-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.auth-panel').forEach(p => p.classList.remove('active'));
+
+            if (tab === 'login') {
+                document.getElementById('tab-login-btn').classList.add('active');
+                document.getElementById('panel-login').classList.add('active');
+            } else if (tab === 'register') {
+                document.getElementById('tab-register-btn').classList.add('active');
+                document.getElementById('panel-register').classList.add('active');
+            } else if (tab === 'search') {
+                document.getElementById('tab-search-btn').classList.add('active');
+                document.getElementById('panel-search').classList.add('active');
+            }
+        }
+
+        function togglePasswordVisibility(inputId, btnOrId) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const isHidden = input.type === 'password';
+            input.type = isHidden ? 'text' : 'password';
+            const btn = typeof btnOrId === 'string' ? document.getElementById(btnOrId) : btnOrId;
+            if (btn) {
+                btn.innerHTML = isHidden
+                    ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`
+                    : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+            }
+        }
+
+        async function handleRegisterSubmit(e) {
+            e.preventDefault();
+            const msgBox = document.getElementById('register-msg');
+            const username = document.getElementById('reg-username').value.trim();
+            const password = document.getElementById('reg-password').value;
+            const email = document.getElementById('reg-email').value.trim();
+            const broker = document.getElementById('reg-broker').value.trim();
+            const balance = document.getElementById('reg-balance').value;
+            const phoneCountry = document.getElementById('reg-phone-country').value;
+            const phoneNum = document.getElementById('reg-phone').value.trim();
+            const fullPhone = phoneNum ? `${phoneCountry} ${phoneNum}` : '';
+
+            if (!username || !password) {
+                showAuthMsg(msgBox, 'Username and password are required.', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username, password,
+                        email: email || undefined,
+                        broker_name: broker || undefined,
+                        balance: balance ? parseFloat(balance) : 10000.0,
+                        phone_number: fullPhone || undefined
+                    })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showAuthMsg(msgBox, '✅ Account created! You can now sign in.', 'success');
+                    // Pre-fill login
+                    document.getElementById('username').value = username;
+                    setTimeout(() => switchAuthTab('login'), 1800);
+                } else {
+                    showAuthMsg(msgBox, data.error || 'Registration failed.', 'error');
+                }
+            } catch (err) {
+                showAuthMsg(msgBox, 'Network error. Please try again.', 'error');
+            }
+        }
+
+        function showAuthMsg(el, text, type) {
+            if (!el) return;
+            el.textContent = text;
+            el.className = 'auth-msg-box ' + type;
+            el.style.display = 'block';
+            if (type === 'success') {
+                setTimeout(() => { el.style.display = 'none'; }, 4000);
+            }
+        }
+
+        // Patch: make auth-error element work with the new UI
+        document.addEventListener('DOMContentLoaded', () => {
+            const authErr = document.getElementById('auth-error');
+            if (!authErr) return;
+            // Observe style changes on auth-error and forward to new UI
+            const observer = new MutationObserver(() => {
+                const txt = authErr.textContent;
+                const visible = authErr.style.display !== 'none' && txt;
+                const msgBox = document.getElementById('auth-error');
+                if (visible) {
+                    msgBox.className = 'auth-msg-box error';
+                    msgBox.style.display = 'block';
+                }
+            });
+            observer.observe(authErr, { attributes: true, childList: true, subtree: true });
+
+            // Particle canvas animation
+            const canvas = document.getElementById('auth-particles-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+
+            const particles = Array.from({ length: 40 }, () => ({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                r: Math.random() * 2 + 0.5,
+                dx: (Math.random() - 0.5) * 0.4,
+                dy: (Math.random() - 0.5) * 0.4,
+                a: Math.random() * 0.5 + 0.1
+            }));
+
+            function animateParticles() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => {
+                    p.x += p.dx; p.y += p.dy;
+                    if (p.x < 0 || p.x > canvas.width) p.dx *= -1;
+                    if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(99,102,241,${p.a})`;
+                    ctx.fill();
+                });
+                requestAnimationFrame(animateParticles);
+            }
+            animateParticles();
+        });
+    </script>
 </body>
 </html>
